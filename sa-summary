@@ -22,7 +22,6 @@ use warnings;
 
 use Getopt::Long;
 use Time::Piece;
-use Pod::Usage;
 
 
 my %opt = ();
