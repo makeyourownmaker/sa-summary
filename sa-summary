@@ -266,8 +266,10 @@ sub summarize {
     br();
 
 
-    my $sortkey = 'spam';
-    my ($table, $count) = get_rules_table(\%sa, $sortkey, $opt{num});
+    my @exclusions = qw( count ); # TODO Check if this is still necessary
+    my $sortkey = 'RULES';
+    $type = 'spam';
+    my ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
 
     my $header    = "TOP SPAM RULES FIRED\n";
     my @col_form  = ( "%4s\t%-24s\t%5s\t%8s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO' );
@@ -275,20 +277,19 @@ sub summarize {
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
 
-    $sortkey = 'ham';
-    ($table, $count) = get_rules_table(\%sa, $sortkey, $opt{num});
-
     $header = "TOP HAM RULES FIRED\n";
+    $count  = 0;
+    $table  = '';
+    $type   = 'ham';
+    ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
-
     # Auto-whitelisting is a score averaging system  It will assign +ve or -ve scores https://wiki.apache.org/spamassassin/AutoWhitelist
-    my @exclusions = qw( AWL count );
+    @exclusions = qw( AWL count );
     $count = 0;
     $table = '';
     $sortkey = 'SCORES';
     $type = 'ham';
-
     ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
 
     $header = "TOP +ve RULES HIT FOR HAM\n";
@@ -301,7 +302,6 @@ sub summarize {
     $table = '';
     $sortkey = 'SCORES';
     $type = 'spam';
-
     ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
 
     $header = "TOP -ve RULES HIT FOR SPAM\n";
@@ -474,11 +474,13 @@ sub get_table_keys {
     return @keys;
 }
 
+
 sub get_table_row {
-    my %sa  = %{(shift)};
-    my $key  = shift;
-    my $type  = shift;
-    my $count  = shift;
+    my %sa      = %{(shift)};
+    my $key     = shift;
+    my $sortkey = shift;
+    my $type    = shift;
+    my $count   = shift;
 
    	my ($percmail, $percspam, $percham, $avsco) = (0, 0, 0, 0);
 
@@ -487,9 +489,6 @@ sub get_table_row {
     $percspam = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100 )   if $sa{stats}{spams} > 0;
     $percham  = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )     if $sa{stats}{hams} > 0;
     $avsco    = sprintf( "%.2f", ( $sa{SCORES}{$type}{$key} / $sa{RULES}{$type}{$key} ) ) if $sa{RULES}{$type}{$key} > 0;
-
-    my $row = sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\n",
-            $count + 1, $key, $sa{RULES}{$type}{$key}, $percmail, $percspam, $percham, $avsco );
 
     #my ($perc1, $perc2, $perc3, $perc4) = (0, 0, 0, 0);
 
@@ -515,30 +514,48 @@ sub get_table_row {
     #        $perc4,                  $sa{RULES}{score}{$key},
     #        $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key});
 
-    $row = sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
-            $count + 1,              $key,
-            $sa{RULES}{$type}{$key}, $percmail,
-            $percspam,               $percham,
-            $avsco,                  $sa{RULES}{score}{$key},
-            $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key});
+    my $row = '';
+    if ( $sortkey eq 'RULES' ) {
+        $row = sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\n",
+                        $count + 1, $key, $sa{RULES}{$type}{$key}, $percmail, 
+                        $percspam, $percham, $avsco );
+    } elsif ( $sortkey eq 'SCORES' ) {
+        $row = sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
+                        $count + 1,              $key,
+                        $sa{RULES}{$type}{$key}, $percmail,
+                        $percspam,               $percham,
+                        $avsco,                  $sa{RULES}{score}{$key},
+                        $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key});
+    }
 
     return $row;
 }
+
 
 sub check_exclusions {
     my %sa       = %{(shift)};
     my @excludes = @{(shift)};
     my $key      = shift;
+    my $sortkey  = shift;
     my $type     = shift;
 
     my $exclusions = 0;
 
-    if ( $type eq 'ham' && $sa{RULES}{score}{$key} < 0 ) {
-        $exclusions = 1;
+    if ( $sortkey eq 'SCORES' ) {
+        if ( $type eq 'ham' && $sa{RULES}{score}{$key} < 0 ) {
+            $exclusions = 1;
+        }
+    
+        if ( $type eq 'spam' && $sa{RULES}{score}{$key} > 0 ) {
+            $exclusions = 1;
+        }
     }
 
-    if ( $type eq 'spam' && $sa{RULES}{score}{$key} > 0 ) {
-        $exclusions = 1;
+    if ( $sortkey eq 'RULES' ) {
+        # next if $sa{RULES}{$sortkey}{$key} == 0;
+        if ( $sa{RULES}{$type}{$key} == 0 ) {
+            $exclusions = 1;
+        }
     }
 
     if ( grep /^$key$/, @excludes ) {
@@ -547,6 +564,7 @@ sub check_exclusions {
 
     return $exclusions;
 }
+
 
 sub get_sorted_table {
     my %sa       = %{(shift)};
@@ -562,52 +580,16 @@ sub get_sorted_table {
     my @keys = get_table_keys(\%sa, $sortkey, $type);
 
     foreach my $key ( @keys ) {
-        next if check_exclusions(\%sa, \@excludes, $key, $type);
+        next if check_exclusions(\%sa, \@excludes, $key, $sortkey, $type);
 
     	$sa{RULES}{$checkkey}{$key} = 0 unless defined $sa{RULES}{$checkkey}{$key};
         # $sa{RULES}{spam}{$key} = 0 unless defined $sa{RULES}{spam}{$key};
         # $sa{RULES}{ham}{$key}  = 0 unless defined $sa{RULES}{ham}{$key};
 
-        $table .= get_table_row(\%sa, $key, $type, $count);
+        $table .= get_table_row(\%sa, $key, $sortkey, $type, $count);
 
         $count++;
         if ( $count >= $opt{num} && $opt{num} > 0 ) {
-            last;
-        }
-    }
-
-    return ($table, $count);
-}
-
-
-sub get_rules_table { 
-    my %sa       = %{(shift)};
-    my $sortkey  = shift;
-    my $TOPRULES = shift;
- 
-    my $count = 0;
-    my $table = '';
-    my @exclusions = qw( count ); # TODO Check if this is still necessary
-
-    my $checkkey = $sortkey eq 'spam' ? 'ham' : 'spam';
-
-    foreach my $key ( sort { $sa{RULES}{$sortkey}{$b} <=> $sa{RULES}{$sortkey}{$a} } keys %{$sa{RULES}{$sortkey}} ) {
-    	$sa{RULES}{$checkkey}{$key} = 0 unless defined $sa{RULES}{$checkkey}{$key};
-        next if grep /^$key$/, @exclusions;
-        next if $sa{RULES}{$sortkey}{$key} == 0;
-
-    	my ($percmail, $percspam, $percham, $avsco) = (0, 0, 0, 0);
-
-        $percmail = sprintf( "%.2f", ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100 );
-        $percspam = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100 ) if $sa{stats}{spams} > 0;
-        $percham  = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )   if $sa{stats}{hams} > 0;
-        $avsco    = sprintf( "%.2f", ( $sa{SCORES}{$sortkey}{$key} / $sa{RULES}{$sortkey}{$key} ) ) if $sa{RULES}{$sortkey}{$key} > 0;
-
-        $table .= sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\n",
-            $count + 1, $key, $sa{RULES}{$sortkey}{$key}, $percmail, $percspam, $percham, $avsco );
-
-        $count++;
-        if ( $count >= $TOPRULES && $TOPRULES > 0 ) {
             last;
         }
     }
