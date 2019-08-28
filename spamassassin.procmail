@@ -1,0 +1,133 @@
+
+
+########################################################################
+# Spamassassin
+#
+# WARNING: Put as few recipes as possible above the spam recipes
+#
+# The condition line ensures that only messages smaller than 250 kB
+# (250 * 1024 = 256000 bytes) are processed by SpamAssassin. Most spam
+# isn't bigger than a few k and working with big messages can bring
+# SpamAssassin to its knees.
+#
+# The lock file ensures that only 1 spamassassin invocation happens
+# at 1 time, to keep the load down.
+
+BEFORE=`date +'%s'`
+
+# Changed on 24/10/17 - 2 emails in last 2 days over 256K limit
+#:0fw: spamassassin.lock
+#* < 256000
+#| spamassassin
+:0fw: spamassassin.lock
+* < 1024000
+| spamassassin
+
+
+AFTER=`date +'%s'`
+
+# Get the X-Spam-Status, X-Spam-Language, Content-Length & Message-Id
+# Discard any leading and trailing blanks
+SPAMSTAT=`formail -cx "X-Spam-Status: " \
+          | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g' -e 's/,[[:space:]]\{2,\}/,/g'`
+SPAMSTAT=${SPAMSTAT:-"NULL"}
+
+# Bayes score
+BSCORE=`formail -cx "X-Spam-Report: " \
+        | sed -e 's/.*\[score\://g' -e 's/\].*//g' -e 's/^[ ]*//g' -e 's/[ ]*$//g'`
+BSCORE=${BSCORE:-"0"}
+
+# Set VAR1 to VAR2 if VAR2 is set and non-null, and set VAR1 to default "value" otherwise
+# VAR1 = ${VAR2:-"value"} 
+SALANG=`formail -x "X-Spam-Languages: " \
+        | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g' || echo "NULL"`
+SALANG=${SALANG:-"NULL"}
+
+SACUST=`formail -cx "X-Spam-Custom: " \
+        | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g' -e 's/,[[:space:]]\{2,\}/,/g'`
+SACUST=${SACUST:-"NULL"}
+
+CONLEN=`formail -cx "Content-Length: " \
+        | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g'`
+CONLEN=${CONLEN:-"0"}
+
+MID=`formail -x "Message-Id: " \
+     | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g'`
+MID=${MID:-"NULL"}
+
+DATETIME=`date "+%Y.%m.%d-%H:%M:%S"`
+
+# Strictly speaking should use a lock file here
+FOO=`echo "$DATETIME\t$AFTER\t$BEFORE\t$CONLEN\t$MID\t$SALANG\t$SPAMSTAT\t$BSCORE" >> $SALOG`
+
+# Replacing _TESTS_ with _TESTSSCORES_
+CUSTLOG=$HOME/.spamassassin/log/spam-custom.log
+BAR=`echo "$DATETIME\t$AFTER\t$BEFORE\t$CONLEN\t$MID\t$SALANG\t$SACUST" >> $CUSTLOG`
+
+
+# Mails with a score of 15 or higher are almost certainly spam (with 0.05%
+# false positives according to rules/STATISTICS.txt). Let's put them in a
+# different mbox. (This one is optional.)
+#
+# 06/06/17 Permanently leaving this commented out to build more
+#          representative training set
+#:0:
+#* ^X-Spam-Level: \*\*\*\*\*\*\*\*
+#/dev/null
+
+# All mail tagged as spam (eg. with a score higher than the set threshold)
+# is moved to "probably-spam".
+:0c
+* ^X-Spam-Status: Yes
+.spam/
+
+# SA score lt 0 - ham
+:0c
+* ^X-Spam-Status: No, score=\/[0-9-]+
+* ? test $MATCH -lt 0
+.sure.ham/
+
+# SA score 0 to 5 - unsure ham
+:0c
+* ^X-Spam-Status: No, score=\/[0-9-]+
+* ? test $MATCH -gt 0
+* ? test $MATCH -lt 6
+.unsure.ham/
+
+
+# Contradictory SA and Bayes classifications
+#--------------------------------------------------------------
+# Opposing SA (spam) and bayes (ham 0.0 or 0.1) classifications
+:0c
+* ^X-Spam-Status: Yes, score=\/[0-9-]+
+* ? test $MATCH -gt 9
+* BSCORE ?? 0\.[01]
+.sa.spam.bayes.ham/
+
+# Opposing SA (ham) and bayes (spam 0.9 or 1.0) classifications
+:0c
+* ^X-Spam-Status: No, score=\/[0-9-]+
+* ? test $MATCH -lt 0
+* BSCORE ?? (0\.9|1\.0)
+.sa.ham.bayes.spam/
+#--------------------------------------------------------------
+
+
+# SA score 5 to 10 - unsure spam
+:0
+* ^X-Spam-Status: Yes, score=\/[0-9-]+
+* ? test $MATCH -gt 4
+* ? test $MATCH -lt 11
+.unsure.spam/
+
+# SA score gt 10 - spam
+:0
+* ^X-Spam-Status: Yes, score=\/[0-9-]+
+* ? test $MATCH -gt 9
+.sure.spam/
+
+
+# End of spamassassin recipes
+########################################################################
+
+# vim: set ft=procmail :
