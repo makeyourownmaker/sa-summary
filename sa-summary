@@ -45,7 +45,7 @@ main(\%opt);
 
 
 # LEAVE THE REST ALONE UNLESS YOU KNOW WHAT YOU ARE DOING ...
-################################################################
+####################################################################################################################################################################################
 
 
 sub main {
@@ -142,8 +142,8 @@ sub process_match {
 
     %sa = update_rules_scores(\%sa, \@tmprules, $mid, $type);
 
-    %sa = calc_min_mix_totals(\%sa, $mid, $type, $rules);
-    %sa = calc_min_mix_totals(\%sa, $mid, 'mail', $rules);
+    %sa = calc_min_max_totals(\%sa, $mid, $type, $rules);
+    %sa = calc_min_max_totals(\%sa, $mid, 'mail', $rules);
 
     return %sa;
 }
@@ -151,14 +151,14 @@ sub process_match {
 
 sub update_rules_scores {
     my %sa       = %{(shift)};
-    my @tmprules = @{(shift)};
+    my @rules = @{(shift)};
     my $mid      = shift;
     my $type     = shift;
 
     $sa{mails}{$mid}{neg_score} = 0;
     $sa{mails}{$mid}{pos_score} = 0;
 
-    foreach my $rule (@tmprules) {
+    foreach my $rule (@rules) {
        $sa{stats}{mail}{rules}{count}++;
 
        my ( $r, $rscore ) = ( $rule =~ /^(.*?)=(.*?)$/ );
@@ -184,7 +184,7 @@ sub update_rules_scores {
 }
 
 
-sub calc_min_mix_totals { 
+sub calc_min_max_totals { 
     my %sa    = %{(shift)};
     my $mid   = shift;
     my $type  = shift;
@@ -276,7 +276,6 @@ sub summarize {
     my $long_rule = 'FALSE';
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
-
     $header = "TOP HAM RULES FIRED\n";
     $count  = 0;
     $table  = '';
@@ -284,27 +283,25 @@ sub summarize {
     ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
+
     # Auto-whitelisting is a score averaging system  It will assign +ve or -ve scores https://wiki.apache.org/spamassassin/AutoWhitelist
     @exclusions = qw( AWL count );
     $count = 0;
     $table = '';
     $sortkey = 'SCORES';
-    $type = 'ham';
+    $type = 'spam';
     ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
-
-    $header = "TOP +ve RULES HIT FOR HAM\n";
-    @col_form = ( "%4s\t%-24s\t%5s %8s %7s %7s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO', 'SCORE', 'TOTSCO' );
-    $long_rule = 'TRUE';
+    $header = "TOP -ve RULES HIT FOR SPAM\n";
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
-
 
     $count = 0;
     $table = '';
     $sortkey = 'SCORES';
-    $type = 'spam';
+    $type = 'ham';
     ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
-
-    $header = "TOP -ve RULES HIT FOR SPAM\n";
+    $header = "TOP +ve RULES HIT FOR HAM\n";
+    @col_form = ( "%4s\t%-24s\t%5s %8s %7s %7s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO', 'SCORE', 'TOTSCO' );
+    $long_rule = 'TRUE';
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
 
@@ -336,61 +333,25 @@ sub summarize {
 
     $count = 0;
     $table = '';
-    my $b_margin    = 0.5;
-    my $b_threshold = 0.5;
-
-    foreach my $key ( reverse sort { $sa{mails}{$b}{'bayes'} <=> $sa{mails}{$a}{'bayes'} } keys %{$sa{mails}} ) {
-        next if $sa{mails}{$key}{'result'} eq 'No';
-        next if $sa{mails}{$key}{'bayes'} > $b_threshold;
-
-        #next if $sa{mails}{$key}{'bayes'} < $threshold - $margin;
-        #next if $sa{mails}{$key}{'bayes'} > $threshold + $margin;
-        $table .= "$key\n\t$sa{mails}{$key}{'score'}\t"
-          . abs( $sa{mails}{$key}{'score'} - $threshold )
-          . "\t$sa{mails}{$key}{'result'}\t$sa{mails}{$key}{'time'} secs\t";
-        $table .= "$sa{mails}{$key}{'size'} bytes\t$sa{mails}{$key}{'bayes'}\n\n";
-
-        $count++;
-        if ( $count >= $opt{num} && $opt{num} > 0 ) {
-            last;
-        }
-    }
-
-    $header = "SPAM WITH LOW BAYES SCORES\n";
+    $sortkey  = 'bayes';
+    $type     = 'spam';
+    $header   = "SPAM WITH LOW BAYES SCORES\n";
     @col_form = ("MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\n");
+    ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
-
-
-    $count       = 0;
-    $b_margin    = 0.5;
-    $b_threshold = 0.5;
-    $table       = '';
-
-    foreach my $key ( reverse sort { $sa{mails}{$b}{'bayes'} <=> $sa{mails}{$a}{'bayes'} } keys %{$sa{mails}} ) {
-        next if $sa{mails}{$key}{'result'} eq 'Yes';
-        next if $sa{mails}{$key}{'bayes'} < $b_threshold;
-
-        #next if $sa{mails}{$key}{'bayes'} < $threshold - $margin;
-        #next if $sa{mails}{$key}{'bayes'} > $threshold + $margin;
-        $table .= "$key\n\t$sa{mails}{$key}{'score'}\t"
-          . abs( $sa{mails}{$key}{'score'} - $threshold )
-          . "\t$sa{mails}{$key}{'result'}\t$sa{mails}{$key}{'time'} secs\t";
-        $table .= "$sa{mails}{$key}{'size'} bytes\t$sa{mails}{$key}{'bayes'}\n\n";
-
-        $count++;
-        if ( $count >= $opt{num} && $opt{num} > 0 ) {
-            last;
-        }
-    }
-
+    
     $header = "HAM WITH HIGH BAYES SCORES\n";
+    $count = 0;
+    $table = '';
+    $type  = 'ham';
+    ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
 
     $count = 0;
     $table = '';
     my $pos_score_threshold = 2;
-    #my $pos_score_margin    = 0.5;
+    #my $pos_score_margin   = 0.5;
 
     foreach my $key ( reverse sort { $sa{mails}{$b}{pos_score} <=> $sa{mails}{$a}{pos_score} } keys %{$sa{mails}} ) {
         next if $sa{mails}{$key}{result} eq 'Yes';
@@ -415,7 +376,7 @@ sub summarize {
     $count = 0;
     $table = '';
     my $neg_score_threshold = -0.1;
-    #my $neg_score_margin    = 0.5;
+    #my $neg_score_margin   = 0.5;
 
     foreach my $key ( reverse sort { $sa{mails}{$b}{neg_score} <=> $sa{mails}{$a}{neg_score} } keys %{$sa{mails}} ) {
         next if $sa{mails}{$key}{result} eq 'No';
@@ -443,9 +404,6 @@ sub summarize {
 }
 
 
-####################################################################################################################################################################################
-
-
 sub calc_averages { 
     my %sa   = %{(shift)};
     my $type = shift;
@@ -469,13 +427,20 @@ sub get_table_keys {
     my $sortkey = shift;
     my $type    = shift;
     
-    my @keys = sort { $sa{$sortkey}{$type}{$b} <=> $sa{$sortkey}{$type}{$a} } keys %{$sa{$sortkey}{$type}};
+    my @keys; 
+
+    if ( $sortkey eq 'RULES' || $sortkey eq 'SCORES' ) {
+        @keys = sort { $sa{$sortkey}{$type}{$b} <=> $sa{$sortkey}{$type}{$a} } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $sortkey eq 'bayes' ) {
+        # foreach my $key ( reverse sort { $sa{mails}{$b}{'bayes'} <=> $sa{mails}{$a}{'bayes'} } keys %{$sa{mails}} ) {
+        @keys = reverse sort { $sa{mails}{$b}{'bayes'} <=> $sa{mails}{$a}{'bayes'} } keys %{$sa{mails}};
+    }
 
     return @keys;
 }
 
 
-sub get_table_row {
+sub get_scores_rules_row {
     my %sa      = %{(shift)};
     my $key     = shift;
     my $sortkey = shift;
@@ -484,35 +449,10 @@ sub get_table_row {
 
    	my ($percmail, $percspam, $percham, $avsco) = (0, 0, 0, 0);
 
-    #print "DEBUG: key ", $key, " type ", $type, "\t$sa{RULES}{spam}{$key}\t$sa{RULES}{ham}{$key}\t$sa{stats}{mails}\n";
     $percmail = sprintf( "%.2f", ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100 );
     $percspam = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100 )   if $sa{stats}{spams} > 0;
     $percham  = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )     if $sa{stats}{hams} > 0;
     $avsco    = sprintf( "%.2f", ( $sa{SCORES}{$type}{$key} / $sa{RULES}{$type}{$key} ) ) if $sa{RULES}{$type}{$key} > 0;
-
-    #my ($perc1, $perc2, $perc3, $perc4) = (0, 0, 0, 0);
-
-    #$perc1 = sprintf( "%.2f", ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100 );
-    #$perc2 = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / ( $sa{stats}{spams} ) ) * 100 ) if $sa{stats}{spams} > 0;
-    #$perc3 = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )       if $sa{stats}{hams} > 0;
-    #$perc4 = sprintf( "%.2f", ( $sa{SCORES}{ham}{$key} / $sa{RULES}{ham}{$key} ) )       if $sa{RULES}{ham}{$key} > 0;
-
-    #        $perc1 = sprintf( "%.2f", ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100 );
-    #        $perc2 = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / ( $sa{stats}{spams} ) ) * 100 ) if $sa{stats}{spams} > 0;
-    #        $perc3 = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )       if $sa{stats}{hams} > 0;
-    #        $perc4 = sprintf( "%.2f", ( $sa{SCORES}{ham}{$key} / $sa{RULES}{ham}{$key} ) )       if $sa{RULES}{ham}{$key} > 0;
-    #        
-    #        $perc1 = sprintf( "%.2f", ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100 );
-    #        $perc2 = sprintf( "%.2f", ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100 ) if $sa{stats}{spams} > 0;
-    #        $perc3 = sprintf( "%.2f", ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100 )   if $sa{stats}{hams} > 0;
-    #        $perc4 = sprintf( "%.2f", ( $sa{SCORES}{spam}{$key} / $sa{RULES}{spam}{$key} ) ) if $sa{RULES}{spam}{$key} > 0;
-    
-    #$row = sprintf( "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
-    #        $count + 1,              $key,
-    #        $sa{RULES}{$type}{$key}, $perc1,
-    #        $perc2,                  $perc3,
-    #        $perc4,                  $sa{RULES}{score}{$key},
-    #        $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key});
 
     my $row = '';
     if ( $sortkey eq 'RULES' ) {
@@ -532,6 +472,110 @@ sub get_table_row {
 }
 
 
+sub get_bayes_row {
+    my %sa  = %{(shift)};
+    my $key = shift;
+
+    my $threshold = 5;
+
+    my $row = "$key\n\t$sa{mails}{$key}{'score'}\t"
+            . abs( $sa{mails}{$key}{'score'} - $threshold )
+            . "\t$sa{mails}{$key}{'result'}\t$sa{mails}{$key}{'time'} secs\t"
+            . "$sa{mails}{$key}{'size'} bytes\t$sa{mails}{$key}{'bayes'}\n\n";
+
+    return $row;
+}
+
+
+sub get_table_row {
+    my %sa      = %{(shift)};
+    my $key     = shift;
+    my $sortkey = shift;
+    my $type    = shift;
+    my $count   = shift;
+
+    my $row = '';
+
+    if ( $sortkey eq 'RULES' || $sortkey eq 'SCORES' ) {
+        $row = get_scores_rules_row(\%sa, $key, $sortkey, $type, $count);
+    } elsif ( $sortkey eq 'bayes' ) {
+        $row = get_bayes_row(\%sa, $key);
+    }
+
+    return $row;
+}
+
+
+sub check_scores_exclusions {
+    my %sa   = %{(shift)};
+    my $key  = shift;
+    my $type = shift;
+
+    my $exclusions = 0;
+
+    if ( $type eq 'ham' && $sa{RULES}{score}{$key} < 0 ) {
+        $exclusions = 1;
+    }
+    
+    if ( $type eq 'spam' && $sa{RULES}{score}{$key} > 0 ) {
+        $exclusions = 1;
+    }
+
+    return $exclusions;
+}
+
+
+sub check_rules_exclusions {
+    my %sa   = %{(shift)};
+    my $key  = shift;
+    my $type = shift;
+
+    my $exclusions = 0;
+
+    # next if $sa{RULES}{$sortkey}{$key} == 0;
+    if ( $sa{RULES}{$type}{$key} == 0 ) {
+        $exclusions = 1;
+    }
+
+    return $exclusions;
+}
+
+
+sub check_bayes_exclusions {
+    my %sa   = %{(shift)};
+    my $key  = shift;
+    my $type = shift;
+
+    my $exclusions = 0;
+
+    # next if $sa{mails}{$key}{'result'} eq 'No';
+    # if ( $sa{mails}{$key}{result} eq 'No' ) {
+    if ( $type eq 'spam' ) {
+        if ( $sa{mails}{$key}{result} eq 'No' ) {
+            $exclusions = 1;
+        }
+    
+        # next if $sa{mails}{$key}{'bayes'} > $b_threshold;
+        # if ( $sa{mails}{$key}{bayes} > 0.5 ) {
+        if ( $sa{mails}{$key}{bayes} > 0.5 ) {
+            $exclusions = 1;
+        }
+    }
+
+    if ( $type eq 'ham' ) {
+        if ( $sa{mails}{$key}{result} eq 'Yes' ) {
+            $exclusions = 1;
+        }
+    
+        if ( $sa{mails}{$key}{bayes} < 0.5 ) {
+            $exclusions = 1;
+        }
+    }
+
+    return $exclusions;
+}
+
+
 sub check_exclusions {
     my %sa       = %{(shift)};
     my @excludes = @{(shift)};
@@ -542,23 +586,14 @@ sub check_exclusions {
     my $exclusions = 0;
 
     if ( $sortkey eq 'SCORES' ) {
-        if ( $type eq 'ham' && $sa{RULES}{score}{$key} < 0 ) {
-            $exclusions = 1;
-        }
-    
-        if ( $type eq 'spam' && $sa{RULES}{score}{$key} > 0 ) {
-            $exclusions = 1;
-        }
+        $exclusions = check_scores_exclusions(\%sa, $key, $type);
+    } elsif ( $sortkey eq 'RULES' ) {
+        $exclusions = check_rules_exclusions(\%sa, $key, $type);
+    } elsif ( $sortkey eq 'bayes' ) {
+        $exclusions = check_bayes_exclusions(\%sa, $key, $type);
     }
 
-    if ( $sortkey eq 'RULES' ) {
-        # next if $sa{RULES}{$sortkey}{$key} == 0;
-        if ( $sa{RULES}{$type}{$key} == 0 ) {
-            $exclusions = 1;
-        }
-    }
-
-    if ( grep /^$key$/, @excludes ) {
+    if ( $exclusions == 0 && grep /^$key$/, @excludes ) {
         $exclusions = 1;
     }
 
