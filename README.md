@@ -64,8 +64,8 @@ INCLUDERC=$HOME/.procmail/spamassassin
 ########################################################################
 ```
 
-If your uncomfortable with procmail recipes and custom log files then see the
-alternatives section below.
+If you are uncomfortable with procmail recipes and custom log files then see the
+Alternatives section below.
 
 
 ## Details
@@ -86,7 +86,11 @@ false-positive spamassassin classifications.
    * Simplify some of the more complex functions
    * Fix worst perlcritic issues
  * Add unit tests
+   * Plus travis CI
+   * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
+   * Include more usage examples
+   * Describe output reports in the Details section
 
 
 ## Contributing
