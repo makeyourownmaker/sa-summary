@@ -71,9 +71,29 @@ sub get_logfile_stats {
     open my $fh, '<', $log or die "Cannot open $log: $!\n";
     while (<$fh>) {
 
-        # TODO add x flag and reformat with comments
-        if ( $_ =~ /(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\w+(\s\w\w)?)\s+(\w+),\s+score=(\-?\d+\.\d+)\s+required=5.0\s+tests=(.*)\s+autolearn=(\w+)\s+version=\S+\s+(\S+)/ or
-             $_ =~ /(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\w+(\s\w\w)?)\s+(\w+),\s+score=(\-?\d+\.\d+)\s+required=5.0\s+tests=(.*)\s+autolearn=(\w+)\s+autolearn_force=\w+\s+\S+\s+(\S+)/ ) {
+        if ( $_ =~ /(\S+)\s+  # datetime
+                    (\d+)\s+  # stop time
+                    (\d+)\s+  # start time
+                    (\d+)\s+  # mail size
+                    (\S+)\s+  # message ID
+                    (\w+(\s\w\w)?)\s+             # lang
+                    (\w+),\s+                     # result
+                    score=(\-?\d+\.\d+)\s+        # score
+                    required=5.0\s+tests=(.*)\s+  # rules
+                    autolearn=(\w+)\s+            # learn
+                    version=\S+\s+(\S+)/x 
+                or
+             $_ =~ /(\S+)\s+  # datetime
+                    (\d+)\s+  # stop time
+                    (\d+)\s+  # start time
+                    (\d+)\s+  # mail size
+                    (\S+)\s+  # message ID
+                    (\w+(\s\w\w)?)\s+             # lang
+                    (\w+),\s+                     # result
+                    score=(\-?\d+\.\d+)\s+        # score
+                    required=5.0\s+tests=(.*)\s+  # rules
+                    autolearn=(\w+)\s+            # learn
+                    autolearn_force=\w+\s+\S+\s+(\S+)/x ) {
             my $mid = $5;
             $sa{mails}{$mid}{datetime} = $1;
             $sa{mails}{$mid}{time}     = $2 - $3;
