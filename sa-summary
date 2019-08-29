@@ -1,22 +1,5 @@
 #!/usr/bin/perl
 
-# -------------------------------------------------------------
-# file:    sa-stats.pl (SARE release)
-# created: 2005-01-31
-# updated: 2007-01-30
-# version: 0.93
-# author:  Dallas Engelken <dallase@uribl.com>
-# desc:    Generates Top Spam/Ham Rules fired for SA 3.x installations.
-#
-#	   IMPORTANT NOTES
-#
-#          See http://www.rulesemporium.com/programs/sa-stats-1.0.txt for
-#          a SA 3.1.x version that supports per-domain and per-user.
-#
-#          If your top 5 does not contain URIBL_BLACK, see
-#          http://www.uribl.com/usage.shtml
-# -------------------------------------------------------------
-
 use strict;
 use warnings;
 
@@ -44,7 +27,6 @@ if ($opt{help}) {
 main(\%opt);
 
 
-# LEAVE THE REST ALONE UNLESS YOU KNOW WHAT YOU ARE DOING ...
 ####################################################################################################################################################################################
 
 
@@ -58,12 +40,12 @@ sub main {
     closedir $dh;
     
     foreach my $log (@logs) {
-        %sa = calc_logfile_stats( \%sa, $opt{logdir} . '/' . $log );
+        %sa = get_logfile_stats( \%sa, $opt{logdir} . '/' . $log );
     }
     
-    %sa = calc_averages(\%sa, 'spam');
-    %sa = calc_averages(\%sa, 'ham');
-    %sa = calc_averages(\%sa, 'mail');
+    %sa = get_averages(\%sa, 'spam');
+    %sa = get_averages(\%sa, 'ham');
+    %sa = get_averages(\%sa, 'mail');
 
     $sa{autolearn}{total} = $sa{autolearn}{spam} + $sa{autolearn}{ham};
 
@@ -71,13 +53,13 @@ sub main {
     $sa{stats}{spam}{time}{total} = $sa{stats}{spam}{time}{total} / 60 / 60;
     $sa{stats}{ham}{time}{total}  = $sa{stats}{ham}{time}{total} / 60 / 60;
 
-    summarize(\%sa, \%opt);
+    print_summary_stats(\%sa, \%opt);
 
     exit;
 }
 
 
-sub calc_logfile_stats {
+sub get_logfile_stats {
     my %sa  = %{(shift)};
     my $log = shift;
 
@@ -221,7 +203,7 @@ sub calc_min_max_totals {
 }
 
 
-sub summarize {
+sub print_summary_stats {
     my %sa  = %{(shift)};
     my %opt = %{(shift)};
 
@@ -233,13 +215,6 @@ sub summarize {
     if ( $sa{stats}{spams} == 0 && $sa{stats}{hams} == 0 ) {
         exit;
     }
-# TODO
-#    elsif ( $sa{stats}{spams} == 0 ) {
-#        # modify $sa{stats}{spam} default values
-#    }
-#    elsif ( $sa{stats}{hams} == 0 ) {
-#        # modify $sa{stats}{ham} default values
-#    }
 
     $format_str = "From: %24s  To: %24s\n";
     print_from_to_time_table(\%sa, $format_str);
@@ -299,30 +274,14 @@ sub summarize {
     print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
 
-    $count = 0;
-    $table = '';
-    my $margin    = 4;    # 4 is a pretty wide margin!
-    my $threshold = 5;
-
-    foreach my $key ( reverse sort { abs( $sa{mails}{$b}{'score'} - $threshold ) <=> abs( $sa{mails}{$a}{'score'} - $threshold ) } keys %{$sa{mails}} ) {
-        next if $sa{mails}{$key}{'score'} < $threshold - $margin;
-        next if $sa{mails}{$key}{'score'} > $threshold + $margin;
-
-        $table .= "$key\n\t$sa{mails}{$key}{'score'}\t"
-          . abs( $sa{mails}{$key}{'score'} - $threshold )
-          . "\t$sa{mails}{$key}{'result'}\t$sa{mails}{$key}{'time'} secs\t";
-        $table .= "$sa{mails}{$key}{'size'} bytes\t$sa{mails}{$key}{'bayes'}\t$sa{mails}{$key}{'lang'}\n\t$sa{mails}{$key}{'rules'}\t\n\n";
-
-        $count++;
-        if ( $count >= $opt{num} && $opt{num} > 0 ) {
-            last;
-        }
-    }
-
-    $header = "MARGINAL CLASSIFICATIONS\n";
-    @col_form = ( "MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\tLANG\n\tRULES\n" );
+    @col_form  = ( "MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\tLANG\n\tRULES\n" );
+    $header    = "MARGINAL CLASSIFICATIONS\n";
     $long_rule = 'FALSE';
-    print_rules_table($count, $table, $header, $long_rule, \@col_form);
+
+    $sortkey = 'marginal';
+    $type    = 'marginal';
+    my ($tmptable, $tmpcount) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+    print_rules_table($tmpcount, $tmptable, $header, $long_rule, \@col_form);
 
 
     @col_form = ("MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\n");
@@ -342,8 +301,8 @@ sub summarize {
     $header   = "SPAM WITH LOW -VE RULE SCORES\n";
     $sortkey  = 'neg_score';
     $type     = 'spam';
-    my ($tmptable, $tmpcount) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
-    print_rules_table($tmpcount, $tmptable, $header, $long_rule, \@col_form);
+    ($table, $count) = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+    print_rules_table($count, $table, $header, $long_rule, \@col_form);
 
     $header  = "HAM WITH HIGH +VE RULE SCORES\n";
     $sortkey = 'pos_score';
@@ -359,7 +318,7 @@ sub summarize {
 }
 
 
-sub calc_averages { 
+sub get_averages { 
     my %sa   = %{(shift)};
     my $type = shift;
 
@@ -388,6 +347,9 @@ sub get_table_keys {
         @keys = sort { $sa{$sortkey}{$type}{$b} <=> $sa{$sortkey}{$type}{$a} } keys %{$sa{$sortkey}{$type}};
     } elsif ( $sortkey eq 'bayes' || $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         @keys = reverse sort { $sa{mails}{$b}{$sortkey} <=> $sa{mails}{$a}{$sortkey} } keys %{$sa{mails}};
+    } elsif ( $sortkey eq 'marginal' ) {
+        my $THRESHOLD = 5;
+        @keys = reverse sort { abs( $sa{mails}{$b}{score} - $THRESHOLD ) <=> abs( $sa{mails}{$a}{score} - $THRESHOLD ) } keys %{$sa{mails}};
     }
 
     return @keys;
@@ -447,11 +409,27 @@ sub get_pos_neg_scores_row {
 
     my $THRESHOLD = 5;
 
-    my $row .= "$key\n\t$sa{mails}{$key}{score}\t"
-            .  abs( $sa{mails}{$key}{score} - $THRESHOLD )
-            .  "\t$sa{mails}{$key}{pos_score}\t$sa{mails}{$key}{neg_score}\t"
-            .  "$sa{mails}{$key}{time} secs\t$sa{mails}{$key}{size} bytes\t"
-            .  "$sa{mails}{$key}{bayes}\n\t$sa{mails}{$key}{rules}\n\n";
+    my $row = "$key\n\t$sa{mails}{$key}{score}\t"
+            . abs( $sa{mails}{$key}{score} - $THRESHOLD )
+            . "\t$sa{mails}{$key}{pos_score}\t$sa{mails}{$key}{neg_score}\t"
+            . "$sa{mails}{$key}{time} secs\t$sa{mails}{$key}{size} bytes\t"
+            . "$sa{mails}{$key}{bayes}\n\t$sa{mails}{$key}{rules}\n\n";
+
+    return $row;
+}
+
+
+sub get_marginal_row {
+    my %sa  = %{(shift)};
+    my $key = shift;
+
+    my $THRESHOLD = 5;
+
+    my $row = "$key\n\t$sa{mails}{$key}{score}\t"
+            . abs( $sa{mails}{$key}{score} - $THRESHOLD )
+            . "\t$sa{mails}{$key}{result}\t$sa{mails}{$key}{time} secs\t"
+            . "$sa{mails}{$key}{size} bytes\t$sa{mails}{$key}{bayes}\t"
+            . "$sa{mails}{$key}{lang}\n\t$sa{mails}{$key}{rules}\t\n\n";
 
     return $row;
 }
@@ -472,6 +450,8 @@ sub get_table_row {
         $row = get_bayes_row(\%sa, $key);
     } elsif ( $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         $row = get_pos_neg_scores_row(\%sa, $key);
+    } elsif ( $sortkey eq 'marginal' ) {
+        $row = get_marginal_row(\%sa, $key);
     }
 
     return $row;
@@ -577,6 +557,28 @@ sub check_pos_neg_score_exclusions {
 }
 
 
+sub check_marginal_exclusions {
+    my %sa   = %{(shift)};
+    my $key  = shift;
+    my $type = shift;
+
+    my $margin     = 4;    # 4 is a pretty wide margin!
+    my $THRESHOLD  = 5;
+    my $exclusions = 0;
+
+    if ( $sa{mails}{$key}{score} < $THRESHOLD - $margin ) {
+        $exclusions = 1;
+    }
+
+    if ( $sa{mails}{$key}{score} > $THRESHOLD + $margin ) {
+        $exclusions = 1;
+    }
+
+    return $exclusions;
+}
+
+
+
 sub check_exclusions {
     my %sa       = %{(shift)};
     my @excludes = @{(shift)};
@@ -594,6 +596,8 @@ sub check_exclusions {
         $exclusions = check_bayes_exclusions(\%sa, $key, $type);
     } elsif ( $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         $exclusions = check_pos_neg_score_exclusions(\%sa, $key, $type);
+    } elsif ( $sortkey eq 'marginal' ) {
+        $exclusions = check_marginal_exclusions(\%sa, $key, $type);
     }
 
     if ( $exclusions == 0 && grep /^$key$/, @excludes ) {
@@ -621,8 +625,6 @@ sub get_sorted_table {
         next if check_exclusions(\%sa, \@excludes, $key, $sortkey, $type);
 
     	$sa{RULES}{$checkkey}{$key} = 0 unless defined $sa{RULES}{$checkkey}{$key};
-        # $sa{RULES}{spam}{$key} = 0 unless defined $sa{RULES}{spam}{$key};
-        # $sa{RULES}{ham}{$key}  = 0 unless defined $sa{RULES}{ham}{$key};
 
         $table .= get_table_row(\%sa, $key, $sortkey, $type, $count);
 
@@ -678,7 +680,6 @@ sub print_summary_stats_table {
         my $UNIQ_SPAM_RULES  = keys %{$sa{RULES}{spam}};
         my $UNIQ_HAM_RULES   = keys %{$sa{RULES}{ham}};
         my $UNIQ_EMAIL_RULES = $UNIQ_SPAM_RULES + $UNIQ_HAM_RULES;
-        #my $UNIQ_EMAIL_RULES = keys %{ { %SPAM_RULES, %HAM_RULES } };
     
         printf "Email: $format_str", $sa{stats}{mail}{rules}{count}, $UNIQ_EMAIL_RULES, $sa{stats}{mail}{rules}{min}, 
                $sa{stats}{mail}{rules}{avg}, $sa{stats}{mail}{rules}{max};
@@ -714,6 +715,7 @@ sub print_rules_table {
         hr($rule_len);
         print $table;
         hr($rule_len);
+        br();
         br();
     }
 
