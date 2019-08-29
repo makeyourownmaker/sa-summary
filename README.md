@@ -58,7 +58,7 @@ It's called from $HOME/.procmailrc like so:
 # Spamassassin
 # WARNING: Put as few recipes as possible above the spam recipes
 
-INCLUDERC=$HOME/.procmail/spamassassin
+INCLUDERC=$HOME/.procmail/spamassassin.procmail
 
 # End of spamassassin recipes
 ########################################################################
@@ -83,7 +83,7 @@ false-positive spamassassin classifications.
 ## Roadmap
 
  * Improve code
-   * Simplify some of the more complex functions
+   * Simplify some of the more complex and/or long functions
    * Fix worst perlcritic issues
  * Add unit tests
    * Plus travis CI
@@ -91,6 +91,7 @@ false-positive spamassassin classifications.
  * Improve documentation
    * Include more usage examples
    * Describe output reports in the Details section
+   * Describe the fields in the custom log file
 
 
 ## Contributing
