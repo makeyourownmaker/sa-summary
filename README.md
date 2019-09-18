@@ -83,10 +83,10 @@ false-positive spamassassin classifications.
 ## Roadmap
 
  * Improve code
-   * Simplify some of the more complex and/or long functions
+   * Simplify some of the more complex functions
    * Fix worst perlcritic issues
  * Add unit tests
-   * Plus travis CI
+   * Setup travis CI
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
    * Include more usage examples

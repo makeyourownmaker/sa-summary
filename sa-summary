@@ -54,7 +54,10 @@ sub main {
     $sa{stats}{spam}{time}{total} = $sa{stats}{spam}{time}{total} / $secs;
     $sa{stats}{ham}{time}{total}  = $sa{stats}{ham}{time}{total} / $secs;
 
-    print_summary_stats(\%sa, \%opt);
+    print_total_tables(\%sa, \%opt);
+    print_top_tables(\%sa, \%opt);
+    print_marginals_table(\%sa, \%opt);
+    print_high_low_tables(\%sa, \%opt);
 
     exit;
 }
@@ -225,7 +228,7 @@ sub calc_min_max_totals {
 }
 
 
-sub print_summary_stats {
+sub print_total_tables {
     my %sa  = %{(shift)};
     my %opt = %{(shift)};
 
@@ -263,6 +266,13 @@ sub print_summary_stats {
     br(\%opt);
     br(\%opt);
 
+    return;
+}
+
+
+sub print_top_tables {
+    my %sa  = %{(shift)};
+    my %opt = %{(shift)};
 
     my @col_form   = ( "%4s\t%-24s\t%5s\t%8s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO' );
     my @exclusions = qw( count ); # TODO Check if this is still necessary
@@ -270,7 +280,7 @@ sub print_summary_stats {
 
     my $header  = "TOP SPAM RULES FIRED\n";
     my $sortkey = 'RULES';
-    $type       = 'spam';
+    my $type    = 'spam';
     my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
@@ -296,22 +306,41 @@ sub print_summary_stats {
     $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
+    return;
+}
 
-    @col_form  = ( "MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\tLANG\n\tRULES\n" );
-    $header    = "MARGINAL CLASSIFICATIONS\n";
-    $long_rule = 'FALSE';
 
-    $sortkey = 'marginal';
-    $type    = 'marginal';
-    $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+sub print_marginals_table {
+    my %sa  = %{(shift)};
+    my %opt = %{(shift)};
+
+
+    my @exclusions = qw( AWL count );
+    my @col_form   = ( "MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\tLANG\n\tRULES\n" );
+    my $header     = "MARGINAL CLASSIFICATIONS\n";
+    my $long_rule  = 'FALSE';
+
+    my $sortkey = 'marginal';
+    my $type    = 'marginal';
+    my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
+    return;
+}
 
-    @col_form = ("MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\n");
-    $header   = "SPAM WITH LOW BAYES SCORES\n";
-    $sortkey  = 'bayes';
-    $type     = 'spam';
-    $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+
+sub print_high_low_tables {
+    my %sa  = %{(shift)};
+    my %opt = %{(shift)};
+
+
+    my @exclusions = qw( AWL count );
+    my @col_form   = ("MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\n");
+    my $header     = "SPAM WITH LOW BAYES SCORES\n";
+    my $sortkey    = 'bayes';
+    my $long_rule  = 'FALSE';
+    my $type  = 'spam';
+    my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
     $header = "HAM WITH HIGH BAYES SCORES\n";
@@ -338,6 +367,7 @@ sub print_summary_stats {
 
     return;
 }
+
 
 
 sub get_averages {
