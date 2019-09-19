@@ -80,6 +80,47 @@ The sa-summary script proved very useful while I was seeing too many
 false-positive spamassassin classifications.
 
 
+### Command line options
+
+The script includes the following options
+
+| Long              | Short | Parameter  | Description                                               | Default value |
+|-------------------|-------|------------|-----------------------------------------------------------|---------------|
+| --logdir          | -l    | directory  | Directory containing spam logs                            | '.'           |
+| --file            | -f    | file/regex | File name or regular expression to look for in the logdir | '^maillog$'   |
+| --top             | -t    | integer    | Number of top rules to display                            | 20            |
+| --sa_threshold    | -s    | integer    | Spamassassin score threshold                              | 5             |
+| --bayes_threshold | -b    | float      | Bayes classifier threshold                                | 0.5           |
+| --pos_threshold   | -p    | float      | Positive spamassassin score threshold                     | 2             |
+| --neg_threshold   | -n    | float      | Negative spamassassin score threshold                     | -0.1          |
+| --margin          | -m    | integer    | Plus/minus margin for marginal classifications            | 4             |
+| --web             | -w    |            | Print web friendly output                                 |               |
+| --help            | -h    |            | Print help message                                        |               |
+
+If number of top rules to display is set to 0 then the following tables will not be displayed
+ * Rules hit:
+   * top ham rules
+   * top spam rules
+   * top positive ham rules
+   * top negative spam rules
+
+If margin is set to 0 then the following tables will not be displayed
+ * Mail details:
+   * marginal mail classifications
+
+If Bayes threshold is set to 0 then the following tables will not be displayed
+ * Mail details:
+   * ham with high Bayes scores
+   * spam with low Bayes scores
+
+If both positive and negative spamassassin score thresholds are set to 0 then
+the following tables will not be displayed
+ * Mail details:
+   * ham with high positive rule scores
+   * spam with high positive rule scores
+
+
+
 ## Roadmap
 
  * Improve code
@@ -110,5 +151,5 @@ discuss what you would like to change.
 
 ## License
 
-Whatever license Dallas Engelken used??
+Whatever license Dallas Engelken used.
 
