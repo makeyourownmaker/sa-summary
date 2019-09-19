@@ -13,7 +13,12 @@ GetOptions(
     \%options,
     'logdir|l=s',
     'file|f=s',
-    'num|n=i',
+    'top|t=i',
+    'sa_threshold|s=i',
+    'bayes_threshold|b=f',
+    'pos_threshold|p=f',
+    'neg_threshold|n=f',
+    'margin|m=i',
     'web|w',
     'help|h',
 ) or usage();
@@ -33,7 +38,7 @@ main(\%options);
 sub main {
     my %opt = %{(shift)};
 
-    my %sa = init_sa_stats();
+    my %sa = get_init_sa_stats();
 
     opendir my $dh, "$opt{logdir}" or die "Cannot open '$opt{logdir}' for reading: $!\n";
     my @logs = grep { /$opt{file}/ixms } readdir $dh;
@@ -55,9 +60,10 @@ sub main {
     $sa{stats}{ham}{time}{total}  = $sa{stats}{ham}{time}{total} / $secs;
 
     print_total_tables(\%sa, \%opt);
-    print_top_tables(\%sa, \%opt);
-    print_marginals_table(\%sa, \%opt);
-    print_high_low_tables(\%sa, \%opt);
+    print_top_tables(\%sa, \%opt)      unless $opt{top}    == 0;
+    print_marginals_table(\%sa, \%opt) unless $opt{margin} == 0;
+    print_high_low_bayes_tables(\%sa, \%opt)  unless $opt{bayes_threshold} == 0;
+    print_high_low_scores_tables(\%sa, \%opt) unless $opt{pos_threshold} == 0 && $opt{neg_threshold} == 0;
 
     exit;
 }
@@ -328,11 +334,9 @@ sub print_marginals_table {
     return;
 }
 
-
-sub print_high_low_tables {
+sub print_high_low_bayes_tables {
     my %sa  = %{(shift)};
     my %opt = %{(shift)};
-
 
     my @exclusions = qw( AWL count );
     my @col_form   = ("MESSAGE_ID\n\tSCORE\tDIFF\tRESULT\tTIME\tSIZE\t\tBAYES\n");
@@ -340,6 +344,7 @@ sub print_high_low_tables {
     my $sortkey    = 'bayes';
     my $long_rule  = 'FALSE';
     my $type  = 'spam';
+
     my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
@@ -348,12 +353,21 @@ sub print_high_low_tables {
     $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
+    return;
+}
 
-    @col_form = ( "MESSAGE_ID\n\tSCORE\tDIFF\tPOS\tNEG\tTIME\tSIZE\t\tBAYES\n\tRULES\n" );
-    $header   = "SPAM WITH LOW -VE RULE SCORES\n";
-    $sortkey  = 'neg_score';
-    $type     = 'spam';
-    $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+
+sub print_high_low_scores_tables {
+    my %sa  = %{(shift)};
+    my %opt = %{(shift)};
+
+    my @exclusions = qw( AWL count );
+    my @col_form = ( "MESSAGE_ID\n\tSCORE\tDIFF\tPOS\tNEG\tTIME\tSIZE\t\tBAYES\n\tRULES\n" );
+    my $header   = "SPAM WITH LOW -VE RULE SCORES\n";
+    my $sortkey  = 'neg_score';
+    my $long_rule  = 'FALSE';
+    my $type     = 'spam';
+    my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
     $header  = "HAM WITH HIGH +VE RULE SCORES\n";
@@ -361,7 +375,6 @@ sub print_high_low_tables {
     $type    = 'ham';
     $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
-
 
     print "</pre>\n</div><div id=\"footer\"></div>\n" if $opt{web};
 
@@ -401,7 +414,7 @@ sub get_table_keys {
     } elsif ( $sortkey eq 'bayes' || $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         @keys = reverse sort { $sa{mails}{$b}{$sortkey} <=> $sa{mails}{$a}{$sortkey} } keys %{$sa{mails}};
     } elsif ( $sortkey eq 'marginal' ) {
-        @keys = reverse sort { abs( $sa{mails}{$b}{score} - $opt{THRESHOLD} ) <=> abs( $sa{mails}{$a}{score} - $opt{THRESHOLD} ) } keys %{$sa{mails}};
+        @keys = reverse sort { abs( $sa{mails}{$b}{score} - $opt{sa_threshold} ) <=> abs( $sa{mails}{$a}{score} - $opt{sa_threshold} ) } keys %{$sa{mails}};
     }
 
     return @keys;
@@ -446,7 +459,7 @@ sub get_bayes_row {
     my $key = shift;
 
     my $row = "$key\n\t$sa{mails}{$key}{score}\t"
-            . abs( $sa{mails}{$key}{score} - $opt{THRESHOLD} )
+            . abs( $sa{mails}{$key}{score} - $opt{sa_threshold} )
             . "\t$sa{mails}{$key}{result}\t$sa{mails}{$key}{time} secs\t"
             . "$sa{mails}{$key}{size} bytes\t$sa{mails}{$key}{bayes}\n\n";
 
@@ -460,7 +473,7 @@ sub get_pos_neg_scores_row {
     my $key = shift;
 
     my $row = "$key\n\t$sa{mails}{$key}{score}\t"
-            . abs( $sa{mails}{$key}{score} - $opt{THRESHOLD} )
+            . abs( $sa{mails}{$key}{score} - $opt{sa_threshold} )
             . "\t$sa{mails}{$key}{pos_score}\t$sa{mails}{$key}{neg_score}\t"
             . "$sa{mails}{$key}{time} secs\t$sa{mails}{$key}{size} bytes\t"
             . "$sa{mails}{$key}{bayes}\n\t$sa{mails}{$key}{rules}\n\n";
@@ -475,7 +488,7 @@ sub get_marginal_row {
     my $key = shift;
 
     my $row = "$key\n\t$sa{mails}{$key}{score}\t"
-            . abs( $sa{mails}{$key}{score} - $opt{THRESHOLD} )
+            . abs( $sa{mails}{$key}{score} - $opt{sa_threshold} )
             . "\t$sa{mails}{$key}{result}\t$sa{mails}{$key}{time} secs\t"
             . "$sa{mails}{$key}{size} bytes\t$sa{mails}{$key}{bayes}\t"
             . "$sa{mails}{$key}{lang}\n\t$sa{mails}{$key}{rules}\t\n\n";
@@ -555,7 +568,7 @@ sub check_bayes_exclusions {
             $exclusions = 1;
         }
 
-        if ( $sa{mails}{$key}{bayes} >= $opt{BAYES_THRESHOLD} ) {
+        if ( $sa{mails}{$key}{bayes} >= $opt{bayes_threshold} ) {
             $exclusions = 1;
         }
     }
@@ -565,7 +578,7 @@ sub check_bayes_exclusions {
             $exclusions = 1;
         }
 
-        if ( $sa{mails}{$key}{bayes} <= $opt{BAYES_THRESHOLD} ) {
+        if ( $sa{mails}{$key}{bayes} <= $opt{bayes_threshold} ) {
             $exclusions = 1;
         }
     }
@@ -587,7 +600,7 @@ sub check_pos_neg_score_exclusions {
             $exclusions = 1;
         }
 
-        if ( $sa{mails}{$key}{neg_score} >= $opt{NEG_SCORE_THRESHOLD} ) {
+        if ( $sa{mails}{$key}{neg_score} >= $opt{neg_threshold} ) {
             $exclusions = 1;
         }
     }
@@ -597,7 +610,7 @@ sub check_pos_neg_score_exclusions {
             $exclusions = 1;
         }
 
-        if ( $sa{mails}{$key}{pos_score} <= $opt{POS_SCORE_THRESHOLD} ) {
+        if ( $sa{mails}{$key}{pos_score} <= $opt{pos_threshold} ) {
             $exclusions = 1;
         }
     }
@@ -614,11 +627,11 @@ sub check_marginal_exclusions {
 
     my $exclusions = 0;
 
-    if ( $sa{mails}{$key}{score} < $opt{THRESHOLD} - $opt{MARGIN} ) {
+    if ( $sa{mails}{$key}{score} < $opt{sa_threshold} - $opt{margin} ) {
         $exclusions = 1;
     }
 
-    if ( $sa{mails}{$key}{score} > $opt{THRESHOLD} + $opt{MARGIN} ) {
+    if ( $sa{mails}{$key}{score} > $opt{sa_threshold} + $opt{margin} ) {
         $exclusions = 1;
     }
 
@@ -674,7 +687,7 @@ sub get_sorted_table {
         $table .= get_table_row(\%sa, \%opt, $key, $sortkey, $type, $count);
 
         $count++;
-        if ( $count >= $opt{num} ) {
+        if ( $count >= $opt{top} ) {
             last;
         }
     }
@@ -807,26 +820,66 @@ sub br {
 }
 
 
-sub check_cli_options {
+sub get_option_defaults {
     my %opt = %{(shift)};
 
-    # Constants
-    $opt{THRESHOLD}           = 5;
-    $opt{BAYES_THRESHOLD}     = 0.5;
-    $opt{POS_SCORE_THRESHOLD} = 2;
-    $opt{NEG_SCORE_THRESHOLD} = -0.1;
-    $opt{MARGIN}              = 4; # 4 is a pretty wide margin!
+    # Defaults
+    $opt{sa_threshold}    = 5    unless defined $opt{sa_threshold};
+    $opt{bayes_threshold} = 0.5  unless defined $opt{bayes_threshold};
+    $opt{pos_threshold}   = 2    unless defined $opt{pos_threshold};
+    $opt{neg_threshold}   = -0.1 unless defined $opt{neg_threshold};
+    $opt{margin}          = 4    unless defined $opt{margin}; # 4 is a pretty wide margin!
 
-    $opt{num}    = 20  unless defined $opt{num};
+    $opt{top}    = 20  unless defined $opt{top};
     $opt{logdir} = '.' unless defined $opt{logdir};
     $opt{file}   = '^maillog$' unless defined $opt{file}; # regex
 
-    if ( $opt{num} !~ /^[+-]?\d+$/xms ) {
+    return %opt;
+}
+
+
+sub check_option_values {
+    my %opt = %{(shift)};
+
+    if ( $opt{top} !~ /^[+-]?\d+$/xms ) {
         print "ERROR: Number of top rules to display must be numeric value (1 to 20)\n";
+        exit;
     }
-    if ( $opt{num} < 1 || $opt{num} > 20 ) {
+
+    if ( $opt{top} < 0 || $opt{top} > 20 ) {
         print "ERROR: Number of top rules to display must be numeric value (1 to 20)\n";
+        exit;
     }
+
+    if ( $opt{bayes_threshold} > 1 || $opt{bayes_threshold} < 0 ) {
+        print "ERROR: Bayes threshold must be numeric value (0 to 1)\n";
+        exit;
+    }
+
+    if ( $opt{pos_threshold} < 0 ) {
+        print "ERROR: Positve score threshold must be greater than or equal to 0\n";
+        exit;
+    }
+
+    if ( $opt{neg_threshold} > 0 ) {
+        print "ERROR: Negative score threshold must be less than or equal to 0\n";
+        exit;
+    }
+
+    if ( $opt{margin} < 0 ) {
+        print "ERROR: Margin must be greater than or equal to 0\n";
+        exit;
+    }
+
+    return %opt;
+}
+
+
+sub check_cli_options {
+    my %opt = %{(shift)};
+
+    %opt = get_option_defaults(\%opt);
+    %opt = check_option_values(\%opt);
 
     return %opt;
 }
@@ -834,18 +887,38 @@ sub check_cli_options {
 
 sub usage {
 
-    print "usage: $0 [-l <dir>] [-f <file>] [-n <num>] [-w]\n";
-    print "\t--logdir|-l <dir>\tDirectory containing spamd logs\n";
-    print "\t--file|-f <file>\tFile names or regex to look for in the logdir\n";
-    print "\t--num|-n <num>\tNumber of top rules to display\n";
-    print "\t--web|-w\tMake it web friendly output\n";
-    print "\t--help|-h\tPrints this help\n";
+    print qq {\nDescription:
+sa-summary is a perl script for summarising spam log files.  Statistics on
+rules, spamassassin scores, Bayes scores, time spent processing mail and
+file size of mails are provided.
+
+Usage: sa-summary [-l <dir>] [-f <file>] [-t <integer>] [-s <integer>] [-b <float>]
+\t\t  [-p <float>] [-n <float>] [-m <integer>] [-w] [-h]
+
+Options:
+\t--logdir, -l <dir>\tDirectory containing spamd logs (default '.')
+\t--file, -f <file>\tFile name or regex to look for in the logdir (default '^maillog\$')
+\t--top, -t <integer>\tNumber of top rules to display (default 20)
+\t--sa_threshold, -s <integer>\tSpamassassin score threshold (default 5)
+\t--bayes_threshold, -b <float>\tBayes classifier threshold (default 0.5)
+\t--pos_threshold, -p <float>\tPositive spamassassin score threshold (default 2)
+\t--neg_threshold, -n <float>\tNegative spamassassin score threshold (default -0.1)
+\t--margin, -m <integer>\tPlus/minus margin for marginal classifications (default 4)
+\t--web, -w\t\tPrint web friendly output
+\t--help, -h\t\tPrints this help
+
+Examples:
+$0 -f spam.log       # Summarise spam.log file
+$0 -f spam.log -n 5  # Display top 5 rules
+
+See also: https://github.com/makeyourownmaker/sa-summary\n
+};
 
     exit;
 }
 
 
-sub init_sa_stats {
+sub get_init_sa_stats {
 
     my %sa;
 
