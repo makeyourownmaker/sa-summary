@@ -56,7 +56,7 @@ Long command line options are listed in the Details section below.
 
 ## Installation
 
-Requires perl 5.8 or later.
+Requires perl 5.8 or later, spamassassin 3.4.2 and procmail.
 
 The following should work in any unix like environment:
 ```sh
