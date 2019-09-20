@@ -56,7 +56,8 @@ Long command line options are listed in the Details section below.
 
 ## Installation
 
-Requires perl 5.8 or later, spamassassin 3.4.2 and procmail.
+Requires perl 5.8 or later, [spamassassin](https://spamassassin.apache.org/) 
+3.4.2 and [procmail](https://en.wikipedia.org/wiki/Procmail).
 
 The following should work in any unix like environment:
 ```sh
@@ -127,13 +128,13 @@ The original script has been extensively modified.
 I use it for processing a custom generated spamassassin log file.  It no 
 longer works with the default spamassassin log files.
 
-The sa-summary script proved very useful while I was seeing too many
+The sa-summary tool proved very useful while I was seeing too many
 false-positive spamassassin classifications.
 
 
 ### Command line options
 
-The script includes the following options
+sa-summary includes the following options:
 
 | Long              | Short | Parameter  | Description                                               | Default value |
 |-------------------|-------|------------|-----------------------------------------------------------|---------------|
