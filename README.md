@@ -90,6 +90,22 @@ INCLUDERC=$HOME/.procmail/spamassassin.procmail
 If you are uncomfortable with procmail recipes and custom log files then see the
 Alternatives section below.
 
+The following fields are included:
+
+| Field                 | Description                                                 |
+|-----------------------|-------------------------------------------------------------|
+| Date time             | Basic timestamp                                             |
+| Stop time             | Time spamassassin finished processing at (secs since epoch) |
+| Start time            | Time spamassassin started processing at (secs since epoch)  |
+| Mail size             | Size of mail in bytes                                       |
+| Message ID            | Email header message ID                                     |
+| Language              | 2 character language code(s)                                |
+| Classification result | Yes or no (spam or ham)                                     |
+| Spamassassin score    | Aggregate score (5 or more is spam)                         |
+| Rules                 | Spamassassin rules hit (with rule scores)                   |
+| Autolearn             | Was mail used for Bayesian learning                         |
+| Bayes score           | Bayes score for mail (0 to 1)                               |
+
 
 ## Details
 
@@ -159,9 +175,10 @@ The following options will disable all tables except the first summary tables:
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
    * Describe output reports in the Details section
-   * Describe the fields in the custom log file
  * Add functionality
    * Include ability to sort other table columns
+   * Improve error messages
+     * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
 
 
 ## Contributing
