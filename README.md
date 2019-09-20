@@ -70,7 +70,8 @@ chmod u+x sa-summary
 
 I generate a custom spam log file configured mostly within procmail.
 
-One day I will write an ode to procmail ...
+One day I will write an ode to [procmail](https://en.wikipedia.org/wiki/Procmail) ... 
+or possibly a diss track for [sieve](http://sieve.info/) :-)
 
 My full spamassassin procmail file is included here 
 [spamassassin.procmail](https://raw.githubusercontent.com/makeyourownmaker/sa-summary/master/spamassassin.procmail).
@@ -105,6 +106,17 @@ The following fields are included:
 | Rules                 | Spamassassin rules hit (with rule scores)                   |
 | Autolearn             | Was mail used for Bayesian learning                         |
 | Bayes score           | Bayes score for mail (0 to 1)                               |
+
+Fields are tab separated.  
+
+Here are a few examples:
+```
+2019.09.20-12:24:04	1568982244	1568982233	1050	<54ad4096-0989-83dd-988f-ba5c9c84fa4a@bristol.ac.uk>	en	No, score=-3.6 required=5.0 tests=BAYES_00,MAILING_LIST_MULTI,RCVD_IN_DNSWL_LOW,SPF_HELO_PASS,SPF_PASS autolearn=ham 	autolearn_force=no version=3.4.2	0.0000
+2019.09.20-12:46:34	1568983594	1568983585	6436	<D9183B21-940E-4884-8D47-64D9AE1C6635@exeter.ac.uk>	en	No, score=-3.6 required=5.0 tests=BAYES_00,LOTS_OF_MONEY,MAILING_LIST_MULTI,RCVD_IN_DNSWL_LOW,SPF_HELO_PASS,SPF_PASS 	autolearn=ham autolearn_force=no version=3.4.2	0.0000
+2019.09.20-13:02:14	1568984534	1568984526	1230	<CAPVnE2YCHktS2n9oQMCXgn39yYhWf5Y-gxXLwKw_SV_PQ1fT5A@mail.gmail.com>	en	No, score=-2.7 required=5.0 tests=AWL,BAYES_00,DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,RCVD_IN_DNSWL_LOW,SPF_HELO_PASS,SPF_PASS autolearn=ham autolearn_force=no version=3.4.2	0.0000
+2019.09.20-14:31:04	1568989864	1568989855	6042	<DB7PR01MB5080A86AE6EDD7479248F96CB7880@DB7PR01MB5080.eurprd01.prod.exchangelabs.com>	en	No, score=-3.5 required=5.0 tests=AWL,BAYES_00,HEADER_FROM_DIFFERENT_DOMAINS,LOTS_OF_MONEY,MAILING_LIST_MULTI,RCVD_IN_DNSWL_LOW,SPF_HELO_PASS,SPF_PASS autolearn=ham 	autolearn_force=no version=3.4.2	0.0000
+2019.09.20-15:15:40	1568992540	1568992531	4676	<74eefd0fdef841d8806b169b6a6505de@uwaterloo.ca>	en	No, score=-3.6 required=5.0 tests=AWL,BAYES_00,HEADER_FROM_DIFFERENT_DOMAINS,LOTS_OF_MONEY,MAILING_LIST_MULTI,RCVD_IN_DNSWL_LOW,SPF_HELO_PASS,SPF_PASS autolearn=ham 	autolearn_force=no version=3.4.2	0.0000
+```
 
 
 ## Details
