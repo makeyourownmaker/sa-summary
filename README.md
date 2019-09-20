@@ -25,10 +25,33 @@ Summary tables are provided for:
 
 ## Usage
 
-Analyzing contents of spam.log: 
+Here are some examples of usage with short command line arguments:
 ```sh
+# Print help message
+./sa-summary -h
+
+# Analyse contents of spam.log in current directory
 ./sa-summary -f spam.log
+
+# Analyse contents of multiple spam.log.* files under /var/log directory
+./sa-summary -l /var/log -f spam.log.*
+
+# Only display top 5 rules
+./sa-summary -f spam.log -t 5
+
+# Use higher positive spamassassin score threshold
+./sa-summary -f spam.log -p 3
+
+# Use lower negative spamassassin score threshold
+./sa-summary -f spam.log -n -1
+
+# Use lower margin with marginal mail classifications table
+./sa-summary -f spam.log -m 2
+
+# Print web friendly output
+./sa-summary -f spam.log -w
 ```
+Long command line options are listed in the Details section below.
 
 
 ## Installation
@@ -94,8 +117,8 @@ The script includes the following options
 | --pos_threshold   | -p    | float      | Positive spamassassin score threshold                     | 2             |
 | --neg_threshold   | -n    | float      | Negative spamassassin score threshold                     | -0.1          |
 | --margin          | -m    | integer    | Plus/minus margin for marginal classifications            | 4             |
-| --web             | -w    |            | Print web friendly output                                 |               |
-| --help            | -h    |            | Print help message                                        |               |
+| --web             | -w    | N/A        | Print web friendly output                                 |               |
+| --help            | -h    | N/A        | Print help message                                        |               |
 
 If number of top rules to display is set to 0 then the following tables will not be displayed
  * Rules hit:
@@ -119,6 +142,11 @@ the following tables will not be displayed
    * ham with high positive rule scores
    * spam with high positive rule scores
 
+The following options will disable all tables except the first summary tables:
+```sh
+./sa-summary -f spam-custom.log -p 0 -n 0 -m 0 -b 0 -t 0
+```
+
 
 
 ## Roadmap
@@ -130,9 +158,10 @@ the following tables will not be displayed
    * Setup travis CI
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
-   * Include more usage examples
    * Describe output reports in the Details section
    * Describe the fields in the custom log file
+ * Add functionality
+   * Include ability to sort other table columns
 
 
 ## Contributing
