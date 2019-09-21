@@ -140,33 +140,40 @@ The following tables are provided:
  * Totals
    * Score, time, size, rules and Bayes - total, min, max, mean
 ```
+Mails
 Email:      351  Autolearn:   181
 Spam:       110  Autolearn:    96
 Ham:        241  Autolearn:    85
 
+Duration
 Email: From: Sun May 28 07:50:52 2017  To: Wed Jun  7 08:21:27 2017
 Spam:  From: Sun May 28 07:50:52 2017  To: Wed Jun  7 08:01:48 2017
 Ham:   From: Sun May 28 08:39:10 2017  To: Wed Jun  7 08:21:27 2017
 
-Email: TotalScore: -761.60  MinScore: -107.30  AvgScore:  -2.17  MaxScore:  81.00
-Spam:  TotalScore: 3012.40  MinScore:    5.00  AvgScore:  27.39  MaxScore:  81.00
-Ham:   TotalScore: -3774.00  MinScore: -107.30  AvgScore: -15.66  MaxScore:   4.60
+Score
+Email: Total: -761.60  Min: -107.30  Avg:  -2.17  Max:  81.00
+Spam:  Total: 3012.40  Min:    5.00  Avg:  27.39  Max:  81.00
+Ham:   Total: -3774.00  Min: -107.30  Avg: -15.66  Max:   4.60
 
-Email: TotalTime:    1.44 hours  MinTime:  3.00 sec  AvgTime: 14.73 sec  MaxTime: 953.00 sec
-Spam:  TotalTime:    0.27 hours  MinTime:  4.00 sec  AvgTime:  8.77 sec  MaxTime: 22.00 sec
-Ham:   TotalTime:    1.17 hours  MinTime:  3.00 sec  AvgTime: 17.44 sec  MaxTime: 953.00 sec
+Time
+Email: Total:    1.44 hours  Min:  3.00 sec  Avg: 14.73 sec  Max: 953.00 sec
+Spam:  Total:    0.27 hours  Min:  4.00 sec  Avg:  8.77 sec  Max: 22.00 sec
+Ham:   Total:    1.17 hours  Min:  3.00 sec  Avg: 17.44 sec  Max: 953.00 sec
 
-Email: TotalSize: 5810915 bytes  MinSize:     0.00 bytes  AvgSize: 16555.31 bytes  MaxSize: 249624.00 bytes
-Spam:  TotalSize: 1531391 bytes  MinSize:    95.00 bytes  AvgSize: 13921.74 bytes  MaxSize: 101431.00 bytes
-Ham:   TotalSize: 4279524 bytes  MinSize:     0.00 bytes  AvgSize: 17757.36 bytes  MaxSize: 249624.00 bytes
+Size
+Email: Total: 5810915 bytes  Min:     0.00 bytes  Avg: 16555.31 bytes  Max: 249624.00 bytes
+Spam:  Total: 1531391 bytes  Min:    95.00 bytes  Avg: 13921.74 bytes  Max: 101431.00 bytes
+Ham:   Total: 4279524 bytes  Min:     0.00 bytes  Avg: 17757.36 bytes  Max: 249624.00 bytes
 
-Email: TotalRules:  4654  UniqueRules:   281  MinRules:   2  AvgRules: 13.26  MaxRules:   38
-Spam:  TotalRules:  2101  UniqueRules:   178  MinRules:   5  AvgRules: 19.10  MaxRules:   38
-Ham:   TotalRules:  2553  UniqueRules:   103  MinRules:   2  AvgRules: 10.59  MaxRules:   28
+Rules
+Email: Total:  4654  Unique:   281  Min:   2  Avg: 13.26  Max:   38
+Spam:  Total:  2101  Unique:   178  Min:   5  Avg: 19.10  Max:   38
+Ham:   Total:  2553  Unique:   103  Min:   2  Avg: 10.59  Max:   28
 
-Email: TotalBayes: 88.54  MinBayes: 0.00  AvgBayes: 0.25  MaxBayes: 1.00
-Spam:  TotalBayes: 82.02  MinBayes: 0.00  AvgBayes: 0.75  MaxBayes: 1.00
-Ham:   TotalBayes:  6.52  MinBayes: 0.00  AvgBayes: 0.03  MaxBayes: 0.52
+Bayes
+Email: Total: 88.54  Min: 0.00  Avg: 0.25  Max: 1.00
+Spam:  Total: 82.02  Min: 0.00  Avg: 0.75  Max: 1.00
+Ham:   Total:  6.52  Min: 0.00  Avg: 0.03  Max: 0.52
 ```
 
  * Rules hit:
@@ -202,11 +209,11 @@ RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
 ----------------------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
 ----------------------------------------------------------------------------------------------
-   1	BAYES_20                	    1	  0.28	  0.91	  0.00	 -0.00	-0.0010	-0.0010
-   2	BAYES_40                	    2	  0.57	  1.82	  0.00	 -0.00	-0.0010	-0.0020
-   3	RP_MATCHES_RCVD         	    4	 12.82	  3.64	 17.01	 -0.00	-0.0010	-0.0040
-   4	SPF_HELO_PASS           	    4	  5.98	  3.64	  7.05	 -0.00	-0.0010	-0.0040
-   5	SPF_PASS                	   11	 51.85	 10.00	 70.95	 -0.00	-0.0010	-0.0110
+   1	KHOP_DNSBL_ADJ          	   22	  6.55	 20.00	  0.41	 -3.30	-3.3000	-72.6000
+   2	BAYES_00                	    2	 65.53	  1.82	 94.61	 -1.90	-1.9000	-3.8000
+   3	CRM114_GOOD             	    1	 36.47	  0.91	 52.70	 -3.00	-3.0000	-3.0000
+   4	CRM114_PROB_GOOD        	    4	 11.68	  3.64	 15.35	 -0.50	-0.5000	-2.0000
+   5	DKIM_VALID_AU           	    8	 30.48	  7.27	 41.08	 -0.10	-0.1000	-0.8000
 ----------------------------------------------------------------------------------------------
 ```
 
@@ -410,16 +417,15 @@ The following options will disable all tables except the initial summary tables:
  * Improve code
    * Simplify some of the more complex functions
    * Fix worst perlcritic issues
- * Improve output
-   * Remove redundancy in initial table element names
-     * TotalTime, MinSize, MaxScore etc
-   * Improve error messages
-     * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
  * Add unit tests
    * Setup travis CI
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
+   * Add field descriptions for some of the examples tables
    * Add some of the README sections to the script in the form of [pod](https://perldoc.perl.org/perlpod.html) markup
+ * Improve output
+   * Improve error messages
+     * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
  * Add functionality
    * Include ability to sort more table columns
 

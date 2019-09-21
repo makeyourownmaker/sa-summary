@@ -251,23 +251,23 @@ sub print_total_tables {
     print_from_to_time_table(\%sa, $format_str);
 
     my $type = 'score';
-    $format_str = "TotalScore: %7.2f  MinScore: %7.2f  AvgScore: %6.2f  MaxScore: %6.2f\n";
+    $format_str = "Total: %7.2f  Min: %7.2f  Avg: %6.2f  Max: %6.2f\n";
     print_summary_stats_table(\%sa, \%opt, $format_str, $type);
 
     $type = 'time';
-    $format_str = "TotalTime: %7.2f hours  MinTime: %5.2f sec  AvgTime: %5.2f sec  MaxTime: %5.2f sec\n";
+    $format_str = "Total: %7.2f hours  Min: %5.2f sec  Avg: %5.2f sec  Max: %5.2f sec\n";
     print_summary_stats_table(\%sa, \%opt, $format_str, $type);
 
     $type = 'size';
-    $format_str = "TotalSize: %7s bytes  MinSize: %8.2f bytes  AvgSize: %8.2f bytes  MaxSize: %8.2f bytes\n";
+    $format_str = "Total: %7s bytes  Min: %8.2f bytes  Avg: %8.2f bytes  Max: %8.2f bytes\n";
     print_summary_stats_table(\%sa, \%opt, $format_str, $type);
 
     $type = 'rules';
-    $format_str = "TotalRules: %5s  UniqueRules: %5s  MinRules: %3s  AvgRules: %5.2f  MaxRules: %4s\n";
+    $format_str = "Total: %5s  Unique: %5s  Min: %3s  Avg: %5.2f  Max: %4s\n";
     print_summary_stats_table(\%sa, \%opt, $format_str, $type);
 
     $type = 'bayes';
-    $format_str = "TotalBayes: %5.2f  MinBayes: %2.2f  AvgBayes: %2.2f  MaxBayes: %2.2f\n";
+    $format_str = "Total: %5.2f  Min: %2.2f  Avg: %2.2f  Max: %2.2f\n";
     print_summary_stats_table(\%sa, \%opt, $format_str, $type);
     br(\%opt);
     br(\%opt);
@@ -410,7 +410,7 @@ sub get_table_keys {
     my @keys;
 
     if ( $sortkey eq 'RULES' || $sortkey eq 'SCORES' ) {
-        @keys = sort { $sa{$sortkey}{$type}{$b} <=> $sa{$sortkey}{$type}{$a} } keys %{$sa{$sortkey}{$type}};
+        @keys = sort { abs( $sa{$sortkey}{$type}{$b} ) <=> abs( $sa{$sortkey}{$type}{$a} ) } keys %{$sa{$sortkey}{$type}};
     } elsif ( $sortkey eq 'bayes' || $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         @keys = reverse sort { $sa{mails}{$b}{$sortkey} <=> $sa{mails}{$a}{$sortkey} } keys %{$sa{mails}};
     } elsif ( $sortkey eq 'marginal' ) {
@@ -700,6 +700,7 @@ sub print_autolearn_table {
     my %sa         = %{(shift)};
     my $format_str = shift;
 
+    print "Mails\n";
     printf "Email: $format_str", $sa{stats}{mails}, $sa{autolearn}{total};
     printf "Spam:  $format_str", $sa{stats}{spams}, $sa{autolearn}{spam};
     printf "Ham:   $format_str", $sa{stats}{hams},  $sa{autolearn}{ham};
@@ -712,7 +713,7 @@ sub print_from_to_time_table {
     my %sa         = %{(shift)};
     my $format_str = shift;
 
-    print "\n";
+    print "\nDuration\n";
     printf "Email: $format_str",
            Time::Piece->strptime($sa{stats}{mail}{datetime}{min}, '%Y.%m.%d-%H:%M:%S'),
            Time::Piece->strptime($sa{stats}{mail}{datetime}{max}, '%Y.%m.%d-%H:%M:%S');
@@ -734,6 +735,7 @@ sub print_summary_stats_table {
     my $type       = shift;
 
     br(\%opt);
+    print ucfirst $type, "\n";
 
     if ( $type eq 'rules' ) {
         my $UNIQ_SPAM_RULES  = keys %{$sa{RULES}{spam}};
@@ -842,12 +844,12 @@ sub check_option_values {
     my %opt = %{(shift)};
 
     if ( $opt{top} !~ /^[+-]?\d+$/xms ) {
-        print "ERROR: Number of top rules to display must be numeric value (1 to 20)\n";
+        print "ERROR: Number of top rules to display must be numeric value (1 to 50)\n";
         exit;
     }
 
-    if ( $opt{top} < 0 || $opt{top} > 20 ) {
-        print "ERROR: Number of top rules to display must be numeric value (1 to 20)\n";
+    if ( $opt{top} < 0 || $opt{top} > 50 ) {
+        print "ERROR: Number of top rules to display must be numeric value (1 to 50)\n";
         exit;
     }
 
@@ -896,8 +898,8 @@ Usage: sa-summary [-l <dir>] [-f <file>] [-t <integer>] [-s <integer>] [-b <floa
 \t\t  [-p <float>] [-n <float>] [-m <integer>] [-w] [-h]
 
 Options:
-\t--logdir, -l <dir>\tDirectory containing spamd logs (default '.')
-\t--file, -f <file>\tFile name or regex to look for in the logdir (default '^maillog\$')
+\t--logdir, -l <dir>\tDirectory containing spam logs (default '.')
+\t--file, -f <file/regex>\tFile name or regular expression to look for in the logdir (default '^maillog\$')
 \t--top, -t <integer>\tNumber of top rules to display (default 20)
 \t--sa_threshold, -s <integer>\tSpamassassin score threshold (default 5)
 \t--bayes_threshold, -b <float>\tBayes classifier threshold (default 0.5)
@@ -905,7 +907,7 @@ Options:
 \t--neg_threshold, -n <float>\tNegative spamassassin score threshold (default -0.1)
 \t--margin, -m <integer>\tPlus/minus margin for marginal classifications (default 4)
 \t--web, -w\t\tPrint web friendly output
-\t--help, -h\t\tPrints this help
+\t--help, -h\t\tPrint help message
 
 Examples:
 $0 -f spam.log       # Summarise spam.log file
