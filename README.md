@@ -410,6 +410,9 @@ The following options will disable all tables except the initial summary tables:
  * Improve code
    * Simplify some of the more complex functions
    * Fix worst perlcritic issues
+ * Improve output
+   * Remove redundancy in initial table element names
+     * TotalTime, MinSize, MaxScore etc
    * Improve error messages
      * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
  * Add unit tests
