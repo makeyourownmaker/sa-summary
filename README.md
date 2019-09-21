@@ -225,11 +225,139 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 
  * Mail details:
    * marginal mail classifications
-   * spam with low Bayes scores
-   * ham with high Bayes scores
-   * spam with high positive rule scores
-   * ham with high positive rule scores
+```
+--------------------------------------------------------------------------------
+MESSAGE_ID
+	SCORE	DIFF	RESULT	TIME	SIZE		BAYES	LANG
+	RULES
+--------------------------------------------------------------------------------
+<KtmxD25vLTdcI85l7p-Ywu_jX1_eMx5ptOIi9EDBMPA.lwau0udeD_0Y7xkbGfPr2h6q3wgt62ufQAuLVKAoP-g@erefen.info>
+	5.0	0	Yes	8 secs	12456 bytes	0.1545	en
+	BAYES_20=-0.001,HTML_MESSAGE=0.001,KAM_INFOUSMEBIZ=0.75,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,T_REMOTE_IMAGE=0.01,URIBL_BLOCKED=0.001
 
+<upKpFbW5DtiS0Yzd_At-AE9I45-maPlttBv2EEP12rQ.LzNKojy1dgaB_4dF1h0fgvDpjiOopZQVJffm01461g8@erefen.info>
+	5.0	0	Yes	8 secs	12033 bytes	0.3477	en
+	BAYES_40=-0.001,HTML_MESSAGE=0.001,KAM_INFOUSMEBIZ=0.75,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,T_REMOTE_IMAGE=0.01,URIBL_BLOCKED=0.001
+
+<DcIXYhyaoHT88UzfIPCneS7lMWzcpeqF-wN63RctNP4.L6ad7Z-fxGQPZMjR5MpzoyXFpt9O4pOj22L8VCAYYgg@refuti.info>
+	4.6	0.4	No	5 secs	8786 bytes	0.5004	en
+	BAYES_50=0.8,CRM114_PROB_SPAM=0.5,HTML_MESSAGE=0.001,KAM_INFOUSMEBIZ=0.75,PYZOR_CHECK=2.5,T_REMOTE_IMAGE=0.01,URIBL_BLOCKED=0.001
+
+<20170529235902.3DE8C10195@foo.org>
+	4.3	0.7	No	18 secs	10577 bytes	0.5000	en da
+	AWL=-4.007,BAYES_50=0.8,DKIM_SIGNED=0.1,DKIM_VALID=-0.1,DKIM_VALID_AU=-0.1,KAM_ASCII_DIVIDERS=0.8,KAM_MXURI=1.5,NO_RELAYS=-0.001,URIBL_ABUSE_SURBL=1.25,URIBL_DBL_SPAM=2.5,URIBL_RHS_DOB=1.514
+
+<0AhDuulGhopstSnhQbMJRmKIWld-9zYVcYcuJPtn6I4.1TlePfoiiUAM3tAMSMsHE5tVF69Y4WmLqC8OmVN3KeY@diunap.info>
+	5.8	0.8	Yes	6 secs	17387 bytes	0.4992	en
+	BAYES_50=0.8,HTML_FONT_LOW_CONTRAST=0.001,HTML_MESSAGE=0.001,KAM_INFOUSMEBIZ=0.75,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,URIBL_BLOCKED=0.001
+
+--------------------------------------------------------------------------------
+```
+
+   * spam with low Bayes scores
+```
+--------------------------------------------------------------------------------
+MESSAGE_ID
+	SCORE	DIFF	RESULT	TIME	SIZE		BAYES
+--------------------------------------------------------------------------------
+<20170602024104.95763.84760.98D42E82@grovesidecapitalmanagement.co.uk>
+	25.8	20.8	Yes	14 secs	88880 bytes	0.0000
+
+<178d98100b64db3b6cbbeaf_db1b2e59@underdo.sinet.co>
+	12.7	7.7	Yes	5 secs	2500 bytes	0.0000
+
+<CrQuZn1JkWtf_aopZSZzvRJlnonkNuRTUisfkXin25I.GGph59fufibRc_pK26XeG9NISrN0Ghx9V8IEgt0sPBc@rhdfol.info>
+	12.1	7.1	Yes	6 secs	11334 bytes	0.0273
+
+<KtmxD25vLTdcI85l7p-Ywu_jX1_eMx5ptOIi9EDBMPA.lwau0udeD_0Y7xkbGfPr2h6q3wgt62ufQAuLVKAoP-g@erefen.info>
+	5.0	0	Yes	8 secs	12456 bytes	0.1545
+
+<1784bc9ba7540b3c6cbbeaf_b2453759@bookmaking.netrep.co>
+	16.0	11	Yes	7 secs	2825 bytes	0.2142
+
+--------------------------------------------------------------------------------
+```
+
+   * ham with high Bayes scores
+```
+--------------------------------------------------------------------------------
+MESSAGE_ID
+	SCORE	DIFF	RESULT	TIME	SIZE		BAYES
+--------------------------------------------------------------------------------
+<20170528235902.2FA64101A6@bar.org>
+	3.5	1.5	No	9 secs	8192 bytes	0.5003
+
+<DcIXYhyaoHT88UzfIPCneS7lMWzcpeqF-wN63RctNP4.L6ad7Z-fxGQPZMjR5MpzoyXFpt9O4pOj22L8VCAYYgg@refuti.info>
+	4.6	0.4	No	5 secs	8786 bytes	0.5004
+
+<20170604235901.C133810D63@baz.org>
+	0.9	4.1	No	11 secs	9700 bytes	0.5021
+
+<145CE01219A8AEEBA31FEDE65751145C@WRG3UW5>
+	-85.3	90.3	No	6 secs	1590 bytes	0.5193
+
+--------------------------------------------------------------------------------
+```
+
+   * spam with high positive rule scores
+```
+--------------------------------------------------------------------------------
+MESSAGE_ID
+	SCORE	DIFF	POS	NEG	TIME	SIZE		BAYES
+	RULES
+--------------------------------------------------------------------------------
+<592F197D.8471.C7602F@qux.corge.org>
+	12.8	7.8	29.135	-16.368	11 secs	1923 bytes	0.5000
+	AWL=-13.068,BAYES_50=0.8,CK_HELO_DYNAMIC_SPLIT_IP=0.001,DATE_IN_PAST_03_06=1.592,HELO_DYNAMIC_IPADDR2=3.607,HTML_MESSAGE=0.001,KHOP_DNSBL_ADJ=-3.3,KHOP_SC_CIDR8=0.1,RCVD_IN_BRBL_LASTEXT=3,RCVD_IN_HOSTKARMA_BL=1.7,RCVD_IN_MSPIKE_BL=0.01,RCVD_IN_MSPIKE_L5=0.001,RCVD_IN_PSBL=2.7,RCVD_IN_SBL_CSS=3.335,RCVD_IN_SEMBLACK=0.5,RCVD_IN_XBL=3,RDNS_NONE=4.5,SPF_SOFTFAIL=0.665,TO_EQ_FM_DIRECT_MX=0.622,TVD_RCVD_IP=0.001,URI_WP_HACKED=3
+
+<458633w2sukg$0672b6v2$1824g7h0@qfn>
+	39.8	34.8	43.588	-3.8	9 secs	12030 bytes	0.9974
+	BAYES_99=4,CRM114_PROB_GOOD=-0.5,HK_RANDOM_ENVFROM=0.001,HK_RANDOM_FROM=0.001,HTML_IMAGE_RATIO_04=0.556,HTML_MESSAGE=0.001,INVALID_DATE=1.096,KHOP_DNSBL_ADJ=-3.3,KHOP_URIBL_BUMP=2.5,MIME_HTML_ONLY=0.723,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,RCVD_IN_BL_SPAMCOP_NET=1.347,RCVD_IN_BRBL_LASTEXT=3,RCVD_IN_HOSTKARMA_BL=1.7,RCVD_IN_MSPIKE_BL=0.01,RCVD_IN_MSPIKE_L5=0.001,RCVD_IN_NIX_SPAM=0.25,RCVD_IN_PSBL=2.7,RCVD_IN_RP_RNBL=1.31,RCVD_IN_SBL_CSS=3.335,RCVD_IN_SEMBLACK=0.5,RCVD_IN_SORBS_SPAM=0.5,RCVD_IN_SORBS_WEB=1.5,RCVD_IN_XBL=3,RCVD_VIA_APNIC=0.001,RDNS_NONE=4.5,SPF_HELO_SOFTFAIL=0.732,SPF_SOFTFAIL=0.665,URIBL_ABUSE_SURBL=1.25,URIBL_DBL_SPAM=2.5,URIBL_SBL=1.623
+
+<kly6_fbu1-5000402557-5550386327-40-86226.6784400517@rfl8>
+	33.6	28.6	37.422	-3.8	5 secs	12007 bytes	1.0000
+	BAYES_99=4,BAYES_999=4,CRM114_PROB_GOOD=-0.5,DIGEST_MULTIPLE=0.293,HTML_IMAGE_RATIO_04=0.556,HTML_MESSAGE=0.001,INVALID_DATE=1.096,KHOP_DNSBL_ADJ=-3.3,MIME_HTML_ONLY=0.723,PYZOR_CHECK=2.5,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,RCVD_IN_BL_SPAMCOP_NET=1.347,RCVD_IN_BRBL_LASTEXT=3,RCVD_IN_HOSTKARMA_BL=1.7,RCVD_IN_MSPIKE_BL=0.01,RCVD_IN_MSPIKE_L5=0.001,RCVD_IN_NIX_SPAM=0.25,RCVD_IN_PSBL=2.7,RCVD_IN_RP_RNBL=1.31,RCVD_IN_SEMBLACK=0.5,RCVD_IN_SORBS_SPAM=0.5,RCVD_IN_SORBS_WEB=1.5,RCVD_VIA_APNIC=0.001,RDNS_NONE=4.5,SPF_HELO_SOFTFAIL=0.732,SPF_SOFTFAIL=0.665,URIBL_ABUSE_SURBL=1.25,URIBL_BLOCKED=0.001
+
+<033545z0beu5$zb1r5k25$7065x8v2@LO260628153036>
+	41.7	36.7	44.983	-3.3	13 secs	235 bytes	0.9996
+	BAYES_99=4,BAYES_999=4,DCC_CHECK=3,DIGEST_MULTIPLE=0.293,HTML_MESSAGE=0.001,HTML_MIME_NO_HTML_TAG=0.377,INVALID_DATE=1.096,KAM_LAZY_DOMAIN_SECURITY=1,KHOP_DNSBL_ADJ=-3.3,MIME_HTML_ONLY=0.723,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,RCVD_IN_BL_SPAMCOP_NET=1.347,RCVD_IN_BRBL_LASTEXT=3,RCVD_IN_HOSTKARMA_BL=1.7,RCVD_IN_MSPIKE_BL=2,RCVD_IN_MSPIKE_L5=0.8,RCVD_IN_PSBL=2.7,RCVD_IN_RP_RNBL=1.31,RCVD_IN_XBL=3,RCVD_VIA_APNIC=0.001,RDNS_NONE=4.5,TO_MALFORMED=2.099,URIBL_ABUSE_SURBL=1.25,URIBL_DBL_PHISH=2.5
+
+<26b470f7vt4j$sz3l56t7$fo4332v8@FRCI08>
+	31.3	26.3	34.635	-3.3	9 secs	330 bytes	0.9691
+	BAYES_95=3,DCC_CHECK=3,DIGEST_MULTIPLE=0.293,HTML_MESSAGE=0.001,HTML_MIME_NO_HTML_TAG=0.377,INVALID_DATE=1.096,KAM_LAZY_DOMAIN_SECURITY=1,KHOP_DNSBL_ADJ=-3.3,MIME_HTML_ONLY=0.723,RAZOR2_CF_RANGE_51_100=0.5,RAZOR2_CF_RANGE_E8_51_100=1.886,RAZOR2_CHECK=1.9,RCVD_IN_BL_SPAMCOP_NET=1.347,RCVD_IN_BRBL_LASTEXT=3,RCVD_IN_HOSTKARMA_BL=1.7,RCVD_IN_MSPIKE_BL=2,RCVD_IN_MSPIKE_L5=0.8,RCVD_IN_NIX_SPAM=0.25,RCVD_IN_PSBL=2.7,RCVD_IN_RP_RNBL=1.31,RCVD_IN_SEMBLACK=0.5,RCVD_IN_SORBS_WEB=1.5,RCVD_VIA_APNIC=0.001,RDNS_NONE=4.5,URIBL_ABUSE_SURBL=1.25,URIBL_BLOCKED=0.001
+
+--------------------------------------------------------------------------------
+```
+
+   * ham with high positive rule scores
+```
+--------------------------------------------------------------------------------
+MESSAGE_ID
+	SCORE	DIFF	POS	NEG	TIME	SIZE		BAYES
+	RULES
+--------------------------------------------------------------------------------
+<DB5PR05MB13035B73AEE1E607674860EFEECB0@DB5PR05MB1303.eurprd05.prod.outlook.com>
+	-6.7	11.7	2.007	-8.751	10 secs	4259 bytes	0.0000
+	BAYES_00=-1.9,CRM114_GOOD=-3,KAM_NUMSUBJECT=0.5,KHOP_RCVD_TRUST=-1.75,RCVD_IN_HOSTKARMA_W=-0.1,RCVD_IN_HOSTKARMA_WL=-2,SPF_PASS=-0.001,SUBJ_ALL_CAPS=1.506,URIBL_BLOCKED=0.001
+
+<0100015c542d318d-e408f5ff-df97-41b2-9219-021ac6f5e88e-000000@email.amazonses.com>
+	-3.9	8.9	2.015	-5.9521	5 secs	3480 bytes	0.0000
+	AWL=-0.000,BAYES_00=-1.9,DKIM_SIGNED=0.1,DKIM_VALID=-0.1,DKIM_VALID_AU=-0.1,HTML_IMAGE_ONLY_28=1.404,HTML_MESSAGE=0.001,KAM_NUMSUBJECT=0.5,KHOP_RCVD_TRUST=-1.75,RCVD_IN_DNSWL_NONE=-0.0001,RCVD_IN_HOSTKARMA_W=-0.1,RCVD_IN_HOSTKARMA_WL=-2,RP_MATCHES_RCVD=-0.001,SPF_PASS=-0.001,T_REMOTE_IMAGE=0.01
+
+<E1dH22r-000wOE-kb@ppsw-40.csi.cam.ac.uk>
+	-2.9	7.9	2.022	-4.903	8 secs	41189 bytes	0.0000
+	AWL=1.286,BAYES_00=-1.9,CRM114_GOOD=-3,HTML_MESSAGE=0.001,LOTS_OF_MONEY=0.001,MIME_HTML_ONLY=0.723,RP_MATCHES_RCVD=-0.001,SPF_HELO_PASS=-0.001,SPF_PASS=-0.001,T_REMOTE_IMAGE=0.01,URIBL_BLOCKED=0.001
+
+<B81F3D646AC0484CA7B9EED7B20F0DA10131DFB873@TS-EXMB-P1.CXG.CO.UK>
+	-6.7	11.7	2.087	-8.751	8 secs	12019 bytes	0.0000
+	AWL=2.084,BAYES_00=-1.9,CRM114_GOOD=-3,HTML_MESSAGE=0.001,KHOP_RCVD_TRUST=-1.75,MIME_QP_LONG_LINE=0.001,RCVD_IN_HOSTKARMA_W=-0.1,RCVD_IN_HOSTKARMA_WL=-2,SPF_PASS=-0.001,URIBL_BLOCKED=0.001
+
+<10BB0CP1706071115320000001732@oswald1.endsleigh.co.uk>
+	-1.9	6.9	2.101	-4	6 secs	1770 bytes	0.0000
+	BAYES_00=-1.9,KAM_COUK=1.1,KAM_NUMSUBJECT=0.5,KHOP_RCVD_UNTRUST=0.5,RCVD_IN_HOSTKARMA_W=-0.1,RCVD_IN_HOSTKARMA_WL=-2,URIBL_BLOCKED=0.001
+
+--------------------------------------------------------------------------------
+```
 
 
 ### Command line options
@@ -277,23 +405,20 @@ The following options will disable all tables except the initial summary tables:
 ```
 
 
-
 ## Roadmap
 
  * Improve code
    * Simplify some of the more complex functions
    * Fix worst perlcritic issues
+   * Improve error messages
+     * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
  * Add unit tests
    * Setup travis CI
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
-   * Describe output reports in the Details section
-   * Include short examples of each output section
    * Add some of the README sections to the script in the form of [pod](https://perldoc.perl.org/perlpod.html) markup
  * Add functionality
    * Include ability to sort more table columns
-   * Improve error messages
-     * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
 
 
 ## Contributing
