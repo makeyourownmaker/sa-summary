@@ -138,7 +138,7 @@ false-positive spamassassin classifications.
 The following tables are provided: 
 
  * Totals
-   * Score, time, size, rules and Bayes - total, min, max, mean
+   * Score, time, size, rules and Bayes - total, min, average, max
 ```
 Mails
 Email:      351  Autolearn:   181
@@ -178,6 +178,7 @@ Ham:   Total:  6.52  Min: 0.00  Avg: 0.03  Max: 0.52
 
  * Rules hit:
    * top spam rules
+     * Sorted by %OFSPAM
 ```
 --------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
@@ -191,6 +192,7 @@ RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
 ```
 
    * top ham rules
+     * Sorted by %OFHAM
 ```
 --------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
@@ -204,6 +206,7 @@ RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
 ```
 
    * top negative spam rules
+     * Sorted by TOTSCO
 ```
 
 ----------------------------------------------------------------------------------------------
@@ -218,6 +221,7 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 ```
 
    * top positive ham rules
+     * Sorted by TOTSCO
 ```
 ----------------------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
@@ -232,6 +236,9 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 
  * Mail details:
    * marginal mail classifications
+     * Sorted by DIFF
+     * DIFF - Difference between spamassassin score and threshold value (usually 5)
+     * RESULT - Yes for spam, No for ham
 ```
 --------------------------------------------------------------------------------
 MESSAGE_ID
@@ -262,6 +269,9 @@ MESSAGE_ID
 ```
 
    * spam with low Bayes scores
+     * Sorted by BAYES
+     * DIFF - Difference between spamassassin score and threshold value (usually 5)
+     * RESULT - Yes for spam, No for ham
 ```
 --------------------------------------------------------------------------------
 MESSAGE_ID
@@ -286,6 +296,9 @@ MESSAGE_ID
 ```
 
    * ham with high Bayes scores
+     * Sorted by BAYES
+     * DIFF - Difference between spamassassin score and threshold value (usually 5)
+     * RESULT - Yes for spam, No for ham
 ```
 --------------------------------------------------------------------------------
 MESSAGE_ID
@@ -307,6 +320,10 @@ MESSAGE_ID
 ```
 
    * spam with high positive rule scores
+     * Sorted by NEG
+     * DIFF - Difference between spamassassin score and threshold value (usually 5)
+     * POS - Sum of all the positive rule scores
+     * NEG - Sum of all the negative rule scores
 ```
 --------------------------------------------------------------------------------
 MESSAGE_ID
@@ -337,6 +354,10 @@ MESSAGE_ID
 ```
 
    * ham with high positive rule scores
+     * Sorted by POS
+     * DIFF - Difference between spamassassin score and threshold value (usually 5)
+     * POS - Sum of all the positive rule scores
+     * NEG - Sum of all the negative rule scores
 ```
 --------------------------------------------------------------------------------
 MESSAGE_ID
@@ -421,7 +442,6 @@ The following options will disable all tables except the initial summary tables:
    * Setup travis CI
    * Possibly also setup [kritika.io](http://kritika.io)
  * Improve documentation
-   * Add field descriptions for some of the examples tables
    * Add some of the README sections to the script in the form of [pod](https://perldoc.perl.org/perlpod.html) markup
  * Improve output
    * Improve error messages
