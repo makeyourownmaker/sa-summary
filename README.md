@@ -178,7 +178,7 @@ Ham:   Total:  6.52  Min: 0.00  Avg: 0.03  Max: 0.52
 
  * Rules hit:
    * top spam rules
-     * Sorted by %OFSPAM
+     * Sorted by COUNT
 ```
 --------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
@@ -192,7 +192,7 @@ RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
 ```
 
    * top ham rules
-     * Sorted by %OFHAM
+     * Sorted by COUNT
 ```
 --------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
