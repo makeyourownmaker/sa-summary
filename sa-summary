@@ -54,10 +54,16 @@ sub main {
 
     $sa{autolearn}{total} = $sa{autolearn}{spam} + $sa{autolearn}{ham};
 
+    $sa{stats}{ham}{uniq_rules}  = keys %{$sa{RULES}{ham}};
+    $sa{stats}{spam}{uniq_rules} = keys %{$sa{RULES}{spam}};
+    $sa{stats}{mail}{uniq_rules} = $sa{stats}{ham}{uniq_rules} + $sa{stats}{spam}{uniq_rules};
+
     my $secs = 3600;
     $sa{stats}{mail}{time}{total} = $sa{stats}{mail}{time}{total} / $secs;
     $sa{stats}{spam}{time}{total} = $sa{stats}{spam}{time}{total} / $secs;
     $sa{stats}{ham}{time}{total}  = $sa{stats}{ham}{time}{total} / $secs;
+
+    %sa = get_scores_rules_stats(\%sa);
 
     print_total_tables(\%sa, \%opt);
     print_top_tables(\%sa, \%opt)      unless $opt{top}    == 0;
@@ -234,6 +240,37 @@ sub calc_min_max_totals {
 }
 
 
+sub get_scores_rules_stats {
+    my %sa = %{(shift)};
+
+    my %seen;
+    my @rules_ham   = keys %{$sa{RULES}{ham}};
+    my @rules_spam  = keys %{$sa{RULES}{spam}};
+    my @scores_ham  = keys %{$sa{SCORES}{ham}};
+    my @scores_spam = keys %{$sa{SCORES}{spam}};
+    my @keys = grep { !$seen{$_}++ } @rules_ham, @rules_spam, @scores_ham, @scores_spam;
+
+    foreach my $key ( @keys ) {
+        if ( ! exists $sa{RULES}{ham}{$key} ) {
+            $sa{RULES}{ham}{$key} = 0;
+        }
+
+        if ( ! exists $sa{RULES}{spam}{$key} ) {
+            $sa{RULES}{spam}{$key} = 0;
+        }
+
+        $sa{stats}{mail}{$key}{percmail} = sprintf '%.2f', ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100;
+        $sa{stats}{spam}{$key}{percspam} = sprintf '%.2f', ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100 if $sa{stats}{spams} > 0;
+        $sa{stats}{ham}{$key}{percham}   = sprintf '%.2f', ( $sa{RULES}{ham}{$key}  / $sa{stats}{hams}  ) * 100 if $sa{stats}{hams}  > 0;
+
+        $sa{stats}{spam}{$key}{avgscore} = sprintf '%.2f', ( $sa{SCORES}{spam}{$key} / $sa{RULES}{spam}{$key} ) if $sa{RULES}{spam}{$key} > 0;
+        $sa{stats}{ham}{$key}{avgscore}  = sprintf '%.2f', ( $sa{SCORES}{ham}{$key}  / $sa{RULES}{ham}{$key}  ) if $sa{RULES}{ham}{$key}  > 0;
+    }
+
+    return %sa;
+}
+
+
 sub print_total_tables {
     my %sa  = %{(shift)};
     my %opt = %{(shift)};
@@ -281,7 +318,7 @@ sub print_top_tables {
     my %opt = %{(shift)};
 
     my @col_form   = ( "%4s\t%-24s\t%5s\t%8s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO' );
-    my @exclusions = qw( count ); # TODO Check if this is still necessary
+    my @exclusions = qw( count );
     my $long_rule  = 'FALSE';
 
     my $header  = "TOP SPAM RULES FIRED\n";
@@ -428,24 +465,23 @@ sub get_scores_rules_row {
     my $type    = shift;
     my $count   = shift;
 
-   	my ($percmail, $percspam, $percham, $avsco) = (0, 0, 0, 0);
-
-    $percmail = sprintf '%.2f', ( ( $sa{RULES}{spam}{$key} + $sa{RULES}{ham}{$key} ) / $sa{stats}{mails} ) * 100;
-    $percspam = sprintf '%.2f', ( $sa{RULES}{spam}{$key} / $sa{stats}{spams} ) * 100    if $sa{stats}{spams} > 0;
-    $percham  = sprintf '%.2f', ( $sa{RULES}{ham}{$key} / $sa{stats}{hams} ) * 100      if $sa{stats}{hams} > 0;
-    $avsco    = sprintf '%.2f', ( $sa{SCORES}{$type}{$key} / $sa{RULES}{$type}{$key} )  if $sa{RULES}{$type}{$key} > 0;
+   	my ($percmail, $percspam, $percham, $avgscore) = (0, 0, 0, 0);
+    $percmail = $sa{stats}{mail}{$key}{percmail};
+    $percspam = $sa{stats}{spam}{$key}{percspam};
+    $percham  = $sa{stats}{ham}{$key}{percham};
+    $avgscore = $sa{stats}{$type}{$key}{avgscore};
 
     my $row;
     if ( $sortkey eq 'RULES' ) {
         $row = sprintf "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\n",
                        $count + 1, $key, $sa{RULES}{$type}{$key}, $percmail,
-                       $percspam, $percham, $avsco;
+                       $percspam, $percham, $avgscore;
     } elsif ( $sortkey eq 'SCORES' ) {
         $row = sprintf "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
                        $count + 1,              $key,
                        $sa{RULES}{$type}{$key}, $percmail,
                        $percspam,               $percham,
-                       $avsco,                  $sa{RULES}{score}{$key},
+                       $avgscore,               $sa{RULES}{score}{$key},
                        $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key};
     }
 
@@ -738,19 +774,15 @@ sub print_summary_stats_table {
     print ucfirst $type, "\n";
 
     if ( $type eq 'rules' ) {
-        my $UNIQ_SPAM_RULES  = keys %{$sa{RULES}{spam}};
-        my $UNIQ_HAM_RULES   = keys %{$sa{RULES}{ham}};
-        my $UNIQ_EMAIL_RULES = $UNIQ_SPAM_RULES + $UNIQ_HAM_RULES;
-
         printf "Email: $format_str", $sa{stats}{mail}{rules}{count},
-               $UNIQ_EMAIL_RULES, $sa{stats}{mail}{rules}{min},
+               $sa{stats}{mail}{uniq_rules}, $sa{stats}{mail}{rules}{min},
                $sa{stats}{mail}{rules}{avg}, $sa{stats}{mail}{rules}{max};
         printf "Spam:  $format_str", $sa{stats}{spam}{rules}{count},
-               $UNIQ_SPAM_RULES, $sa{stats}{spam}{rules}{min},
+               $sa{stats}{spam}{uniq_rules}, $sa{stats}{spam}{rules}{min},
                $sa{stats}{spam}{rules}{avg}, $sa{stats}{spam}{rules}{max}
                unless $sa{stats}{spams} == 0;
         printf "Ham:   $format_str", $sa{stats}{ham}{rules}{count},
-               $UNIQ_HAM_RULES, $sa{stats}{ham}{rules}{min},
+               $sa{stats}{ham}{uniq_rules}, $sa{stats}{ham}{rules}{min},
                $sa{stats}{ham}{rules}{avg}, $sa{stats}{ham}{rules}{max}
                unless $sa{stats}{hams} == 0;
     }
@@ -910,8 +942,8 @@ Options:
 \t--help, -h\t\tPrint help message
 
 Examples:
-$0 -f spam.log       # Summarise spam.log file
-$0 -f spam.log -n 5  # Display top 5 rules
+sa-summary -f spam.log       # Summarise spam.log file
+sa-summary -f spam.log -n 5  # Display top 5 rules
 
 See also: https://github.com/makeyourownmaker/sa-summary\n
 };
@@ -928,22 +960,17 @@ sub get_init_sa_stats {
     $sa{stats}{spams} = 0;
     $sa{stats}{hams}  = 0;
 
-    #my @names = qw( time size bayes );
-    #@{$sa{stats}{mail}}{@names} = (0, 0, 0);
-    #@{$sa{stats}{spam}}{@names} = (0, 0, 0);
-    #@{$sa{stats}{ham}}{@names}  = (0, 0, 0);
-
     ( $sa{stats}{mail}{time}{total},  $sa{stats}{spam}{time}{total},  $sa{stats}{ham}{time}{total}  ) = ( 0, 0, 0 );
     ( $sa{stats}{mail}{size}{total},  $sa{stats}{spam}{size}{total},  $sa{stats}{ham}{size}{total}  ) = ( 0, 0, 0 );
     ( $sa{stats}{mail}{bayes}{total}, $sa{stats}{spam}{bayes}{total}, $sa{stats}{ham}{bayes}{total} ) = ( 0, 0, 0 );
-    #( $sa{stats}{mail}{scores}{total}, $sa{stats}{spam}{scores}{total}, $sa{stats}{ham}{scores}{total} ) = ( 0, 0, 0 );
     ( $sa{stats}{mail}{rules}{count}, $sa{stats}{spam}{rules}{count}, $sa{stats}{ham}{rules}{count} ) = ( 0, 0, 0 );
+    #( $sa{stats}{mail}{scores}{total}, $sa{stats}{spam}{scores}{total}, $sa{stats}{ham}{scores}{total} ) = ( 0, 0, 0 );
 
     ( $sa{stats}{mail}{score}{min}, $sa{stats}{spam}{score}{min}, $sa{stats}{ham}{score}{min} ) = ( 50, 50, 50 );
     ( $sa{stats}{mail}{score}{max}, $sa{stats}{spam}{score}{max}, $sa{stats}{ham}{score}{max} ) = ( -50, -50, -50 );
     ( $sa{stats}{mail}{time}{min},  $sa{stats}{spam}{time}{min},  $sa{stats}{ham}{time}{min}  ) = ( 60, 60, 60 );
     ( $sa{stats}{mail}{time}{max},  $sa{stats}{spam}{time}{max},  $sa{stats}{ham}{time}{max}  ) = ( 0, 0, 0 );
-    ( $sa{stats}{mail}{size}{min},  $sa{stats}{spam}{size}{min},  $sa{stats}{ham}{size}{min}  ) = ( 100000, 100000, 100000 );
+    ( $sa{stats}{mail}{size}{min},  $sa{stats}{spam}{size}{min},  $sa{stats}{ham}{size}{min}  ) = ( 100_000, 100_000, 100_000 );
     ( $sa{stats}{mail}{size}{max},  $sa{stats}{spam}{size}{max},  $sa{stats}{ham}{size}{max}  ) = ( 0, 0, 0 );
     ( $sa{stats}{mail}{rules}{min}, $sa{stats}{spam}{rules}{min}, $sa{stats}{ham}{rules}{min} ) = ( 100, 100, 100 );
     ( $sa{stats}{mail}{rules}{max}, $sa{stats}{spam}{rules}{max}, $sa{stats}{ham}{rules}{max} ) = ( 0, 0, 0 );
