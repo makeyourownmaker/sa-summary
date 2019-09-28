@@ -180,29 +180,29 @@ Ham:   Total:  6.52  Min: 0.00  Avg: 0.03  Max: 0.52
    * top spam rules
      * Sorted by COUNT
 ```
---------------------------------------------------------------------------------
-RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
---------------------------------------------------------------------------------
-   1	HTML_MESSAGE            	  105	 67.24	 95.45	 54.36	  0.00
-   2	RDNS_NONE               	   82	 25.07	 74.55	  2.49	  4.50
-   3	RAZOR2_CF_RANGE_51_100  	   75	 21.65	 68.18	  0.41	  0.50
-   4	RAZOR2_CHECK            	   75	 21.65	 68.18	  0.41	  1.90
-   5	RAZOR2_CF_RANGE_E8_51_100	   75	 21.65	 68.18	  0.41	  1.89
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
+------------------------------------------------------------------------------------------------
+   1	HTML_MESSAGE            	  105	 67.24	 95.45	 54.36	  0.00	0.0010	0.1050
+   2	RDNS_NONE               	   82	 25.07	 74.55	  2.49	  4.50	4.5000	369.0000
+   3	RAZOR2_CHECK            	   75	 21.65	 68.18	  0.41	  1.90	1.9000	142.5000
+   4	RAZOR2_CF_RANGE_E8_51_100	   75	 21.65	 68.18	  0.41	  1.89	1.8860	141.4500
+   5	RAZOR2_CF_RANGE_51_100  	   75	 21.65	 68.18	  0.41	  0.50	0.5000	37.5000
+------------------------------------------------------------------------------------------------
 ```
 
    * top ham rules
      * Sorted by COUNT
 ```
---------------------------------------------------------------------------------
-RANK	RULE NAME               	COUNT	 %OFMAIL %OFSPAM  %OFHAM  AVGSCO
---------------------------------------------------------------------------------
-   1	BAYES_00                	  228	 65.53	  1.82	 94.61	 -1.90
-   2	SPF_PASS                	  171	 51.85	 10.00	 70.95	 -0.00
-   3	AWL                     	  170	 49.00	  1.82	 70.54	  0.42
-   4	RCVD_IN_HOSTKARMA_W     	  163	 46.44	  0.00	 67.63	 -0.10
-   5	KHOP_RCVD_TRUST         	  161	 45.87	  0.00	 66.80	 -1.75
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
+------------------------------------------------------------------------------------------------
+   1	BAYES_00                	  228	 65.53	  1.82	 94.61	 -1.90	-1.9000	-433.2000
+   2	SPF_PASS                	  171	 51.85	 10.00	 70.95	 -0.00	-0.0010	-0.1710
+   3	AWL                     	  170	 49.00	  1.82	 70.54	  0.42	0.2110	35.8700
+   4	RCVD_IN_HOSTKARMA_W     	  163	 46.44	  0.00	 67.63	 -0.10	-0.1000	-16.3000
+   5	KHOP_RCVD_TRUST         	  161	 45.87	  0.00	 66.80	 -1.75	-1.7500	-281.7500
+------------------------------------------------------------------------------------------------
 ```
 
    * top negative spam rules
@@ -392,18 +392,19 @@ MESSAGE_ID
 
 sa-summary includes the following options:
 
-| Long              | Short | Parameter  | Description                                               | Default value |
-|-------------------|-------|------------|-----------------------------------------------------------|---------------|
-| --logdir          | -l    | directory  | Directory containing spam logs                            | '.'           |
-| --file            | -f    | file/regex | File name or regular expression to look for in the logdir | '^maillog$'   |
-| --top             | -t    | integer    | Number of top rules to display                            | 20            |
-| --sa_threshold    | -s    | integer    | Spamassassin score threshold                              | 5             |
-| --bayes_threshold | -b    | float      | Bayes classifier threshold                                | 0.5           |
-| --pos_threshold   | -p    | float      | Positive spamassassin score threshold                     | 2             |
-| --neg_threshold   | -n    | float      | Negative spamassassin score threshold                     | -0.1          |
-| --margin          | -m    | integer    | Plus/minus margin for marginal classifications            | 4             |
-| --web             | -w    | N/A        | Print web friendly output                                 | N/A           |
-| --help            | -h    | N/A        | Print help message                                        | N/A           |
+| Long              | Short | Parameter  | Description                                                                     | Default value |
+|-------------------|-------|------------|---------------------------------------------------------------------------------|---------------|
+| --logdir          | -l    | directory  | Directory containing spam logs                                                  | '.'           |
+| --file            | -f    | file/regex | File name or regular expression to look for in the logdir                       | '^maillog$'   |
+| --top             | -t    | integer    | Number of top rules to display                                                  | 100           |
+| --order           | -o    | string     | Order of results in first 4 tables: RULE COUNT PERCMAIL PERCHAM PERCSPAM TOTSCO | TOTSCO        |
+| --sa_threshold    | -s    | integer    | Spamassassin score threshold                                                    | 5             |
+| --bayes_threshold | -b    | float      | Bayes classifier threshold                                                      | 0.5           |
+| --pos_threshold   | -p    | float      | Positive spamassassin score threshold                                           | 2             |
+| --neg_threshold   | -n    | float      | Negative spamassassin score threshold                                           | -0.1          |
+| --margin          | -m    | integer    | Plus/minus margin for marginal classifications                                  | 4             |
+| --web             | -w    | N/A        | Print web friendly output                                                       | N/A           |
+| --help            | -h    | N/A        | Print help message                                                              | N/A           |
 
 If number of top rules to display is set to 0 then the following tables will not be displayed
  * Rules hit:
@@ -444,10 +445,10 @@ The following options will disable all tables except the initial summary tables:
  * Improve documentation
    * Add some of the README sections to the script in the form of [pod](https://perldoc.perl.org/perlpod.html) markup
  * Improve output
+   * Improve printf formatting
+     * Use %3.2f instead of %s with floats for example
    * Improve error messages
      * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
- * Add functionality
-   * Include ability to sort more table columns
 
 
 ## Contributing
