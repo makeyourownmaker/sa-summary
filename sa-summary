@@ -14,6 +14,7 @@ GetOptions(
     'logdir|l=s',
     'file|f=s',
     'top|t=i',
+    'order|o=s',
     'sa_threshold|s=i',
     'bayes_threshold|b=f',
     'pos_threshold|p=f',
@@ -317,14 +318,14 @@ sub print_top_tables {
     my %sa  = %{(shift)};
     my %opt = %{(shift)};
 
-    my @col_form   = ( "%4s\t%-24s\t%5s\t%8s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO' );
+    my @col_form   = ( "%4s\t%-24s\t%5s %8s %7s %7s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO', 'SCORE', 'TOTSCO' );
     my @exclusions = qw( count );
-    my $long_rule  = 'FALSE';
+    my $long_rule  = 'TRUE';
 
     my $header  = "TOP SPAM RULES FIRED\n";
     my $sortkey = 'RULES';
     my $type    = 'spam';
-    my $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+    my $table   = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
     $header = "TOP HAM RULES FIRED\n";
@@ -334,14 +335,11 @@ sub print_top_tables {
 
 
     # Auto-whitelisting is a score averaging system  It will assign +ve or -ve scores https://wiki.apache.org/spamassassin/AutoWhitelist
-    @col_form   = ( "%4s\t%-24s\t%5s %8s %7s %7s %7s %7s %7s\n", 'RANK', 'RULE NAME', 'COUNT', '%OFMAIL', '%OFSPAM', '%OFHAM', 'AVGSCO', 'SCORE', 'TOTSCO' );
     @exclusions = qw( AWL count );
-    $long_rule  = 'TRUE';
-
     $header  = "TOP -ve RULES HIT FOR SPAM\n";
     $sortkey = 'SCORES';
     $type    = 'spam';
-    $table = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
+    $table   = get_sorted_table(\%sa, \%opt, \@exclusions, $sortkey, $type);
     print_rules_table(\%opt, $table, $header, $long_rule, \@col_form);
 
     $header  = "TOP +ve RULES HIT FOR HAM\n";
@@ -438,6 +436,41 @@ sub get_averages {
 }
 
 
+sub get_scores_rules_keys {
+    my %sa      = %{(shift)};
+    my %opt     = %{(shift)};
+    my $sortkey = shift;
+    my $type    = shift;
+
+    my @keys;
+
+    if ( $opt{order} eq 'COUNT' ) {
+        # count  $sa{RULES}{$type}{$key}
+        @keys = sort { abs( $sa{RULES}{$type}{$b} ) <=> abs( $sa{RULES}{$type}{$a} ) } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $opt{order} eq 'TOTSCO' ) {
+        # scores $sa{SCORES}{$type}{$key}
+        @keys = sort { abs( $sa{SCORES}{$type}{$b} ) <=> abs( $sa{SCORES}{$type}{$a} ) } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $opt{order} eq 'PERCMAIL' ) {
+        # percmail  $sa{stats}{mail}{$key}{percmail}
+        @keys = reverse sort { $sa{stats}{mail}{$a}{percmail} <=> $sa{stats}{mail}{$b}{percmail} } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $opt{order} eq 'PERCSPAM' ) {
+        # $percspam  $sa{stats}{mail}{$key}{percspam}
+        @keys = reverse sort { $sa{stats}{spam}{$a}{percspam} <=> $sa{stats}{spam}{$b}{percspam} } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $opt{order} eq 'PERCHAM' ) {
+        # percham   $sa{stats}{mail}{$key}{percham}
+        @keys = reverse sort { $sa{stats}{ham}{$a}{percham} <=> $sa{stats}{ham}{$b}{percham} } keys %{$sa{$sortkey}{$type}};
+    } elsif ( $opt{order} eq 'RULE' ) {
+        # rule name $key
+        @keys = sort keys %{$sa{$sortkey}{$type}};
+    } else {
+        # default order - COUNT for first 2 tables and TOTSCO for second 2 tables
+        @keys = sort { abs( $sa{$sortkey}{$type}{$b} ) <=> abs( $sa{$sortkey}{$type}{$a} ) } keys %{$sa{$sortkey}{$type}};
+    }
+
+    return @keys;
+}
+
+
 sub get_table_keys {
     my %sa      = %{(shift)};
     my %opt     = %{(shift)};
@@ -447,7 +480,7 @@ sub get_table_keys {
     my @keys;
 
     if ( $sortkey eq 'RULES' || $sortkey eq 'SCORES' ) {
-        @keys = sort { abs( $sa{$sortkey}{$type}{$b} ) <=> abs( $sa{$sortkey}{$type}{$a} ) } keys %{$sa{$sortkey}{$type}};
+        @keys = get_scores_rules_keys(\%sa, \%opt, $sortkey, $type);
     } elsif ( $sortkey eq 'bayes' || $sortkey eq 'pos_score' || $sortkey eq 'neg_score' ) {
         @keys = reverse sort { $sa{mails}{$b}{$sortkey} <=> $sa{mails}{$a}{$sortkey} } keys %{$sa{mails}};
     } elsif ( $sortkey eq 'marginal' ) {
@@ -471,19 +504,12 @@ sub get_scores_rules_row {
     $percham  = $sa{stats}{ham}{$key}{percham};
     $avgscore = $sa{stats}{$type}{$key}{avgscore};
 
-    my $row;
-    if ( $sortkey eq 'RULES' ) {
-        $row = sprintf "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\n",
-                       $count + 1, $key, $sa{RULES}{$type}{$key}, $percmail,
-                       $percspam, $percham, $avgscore;
-    } elsif ( $sortkey eq 'SCORES' ) {
-        $row = sprintf "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
-                       $count + 1,              $key,
-                       $sa{RULES}{$type}{$key}, $percmail,
-                       $percspam,               $percham,
-                       $avgscore,               $sa{RULES}{score}{$key},
-                       $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key};
-    }
+    my $row = sprintf "%4d\t%-24s\t%5s\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%2.4f\t%4.4f\n",
+                      $count + 1,              $key,
+                      $sa{RULES}{$type}{$key}, $percmail,
+                      $percspam,               $percham,
+                      $avgscore,               $sa{RULES}{score}{$key},
+                      $sa{RULES}{score}{$key} * $sa{RULES}{$type}{$key};
 
     return $row;
 }
@@ -832,7 +858,7 @@ sub hr {
         print "<hr size=1 width=50% align=left>\n";
     }
     else {
-        print '-' x 80;
+        print '-' x 82;
         print '-' x 14 if $long eq 'TRUE';
         print "\n";
     }
@@ -864,6 +890,7 @@ sub get_option_defaults {
     $opt{neg_threshold}   = -0.1 unless defined $opt{neg_threshold};
     $opt{margin}          = 4    unless defined $opt{margin}; # 4 is a pretty wide margin!
 
+    $opt{order}  = ''  unless defined $opt{order};
     $opt{top}    = 20  unless defined $opt{top};
     $opt{logdir} = '.' unless defined $opt{logdir};
     $opt{file}   = '^maillog$' unless defined $opt{file}; # regex
@@ -876,12 +903,12 @@ sub check_option_values {
     my %opt = %{(shift)};
 
     if ( $opt{top} !~ /^[+-]?\d+$/xms ) {
-        print "ERROR: Number of top rules to display must be numeric value (1 to 50)\n";
+        print "ERROR: Number of top rules to display must be numeric value (1 to 100)\n";
         exit;
     }
 
-    if ( $opt{top} < 0 || $opt{top} > 50 ) {
-        print "ERROR: Number of top rules to display must be numeric value (1 to 50)\n";
+    if ( $opt{top} < 0 || $opt{top} > 100 ) {
+        print "ERROR: Number of top rules to display must be numeric value (1 to 100)\n";
         exit;
     }
 
@@ -902,6 +929,12 @@ sub check_option_values {
 
     if ( $opt{margin} < 0 ) {
         print "ERROR: Margin must be greater than or equal to 0\n";
+        exit;
+    }
+
+    my %order = ( RULE => 1, COUNT => 1, PERCMAIL => 1, PERCHAM => 1, PERCSPAM => 1, TOTSCO => 1, '' => 1 );
+    if ( ! exists $order{$opt{order}} ) {
+        print "ERROR: Order must be one of the following: RULE, COUNT, PERCMAIL, PERCHAM, PERCSPAM or TOTSCO\n";
         exit;
     }
 
@@ -926,13 +959,14 @@ sa-summary is a perl script for summarising spam log files.  Statistics on
 rules, spamassassin scores, Bayes scores, time spent processing mail and
 file size of mails are provided.
 
-Usage: sa-summary [-l <dir>] [-f <file>] [-t <integer>] [-s <integer>] [-b <float>]
-\t\t  [-p <float>] [-n <float>] [-m <integer>] [-w] [-h]
+Usage: sa-summary [-l <dir>] [-f <file>] [-t <integer>] [-o <string>] [-s <integer>]
+\t\t  [-b <float>] [-p <float>] [-n <float>] [-m <integer>] [-w] [-h]
 
 Options:
 \t--logdir, -l <dir>\tDirectory containing spam logs (default '.')
 \t--file, -f <file/regex>\tFile name or regular expression to look for in the logdir (default '^maillog\$')
 \t--top, -t <integer>\tNumber of top rules to display (default 20)
+\t--order, -o <string>\tOrder of results in first 4 tables: RULE COUNT PERCMAIL PERCHAM PERCSPAM TOTSCO
 \t--sa_threshold, -s <integer>\tSpamassassin score threshold (default 5)
 \t--bayes_threshold, -b <float>\tBayes classifier threshold (default 0.5)
 \t--pos_threshold, -p <float>\tPositive spamassassin score threshold (default 2)
