@@ -41,6 +41,9 @@ Here are some examples of usage with short command line arguments:
 # Only display top 5 rules
 ./sa-summary -f spam.log -t 5
 
+# Order first 4 tables by TOTSCO
+./sa-summary -f spam.log -o TOTSCO
+
 # Use higher positive spamassassin score threshold
 ./sa-summary -f spam.log -p 3
 
@@ -178,7 +181,7 @@ Ham:   Total:  6.52  Min: 0.00  Avg: 0.03  Max: 0.52
 
  * Rules hit:
    * top spam rules
-     * Sorted by COUNT
+     * Sorted by COUNT by default
 ```
 ------------------------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
@@ -192,7 +195,7 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 ```
 
    * top ham rules
-     * Sorted by COUNT
+     * Sorted by COUNT by default
 ```
 ------------------------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
@@ -206,7 +209,7 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 ```
 
    * top negative spam rules
-     * Sorted by TOTSCO
+     * Sorted by TOTSCO by default
 ```
 
 ----------------------------------------------------------------------------------------------
@@ -221,7 +224,7 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 ```
 
    * top positive ham rules
-     * Sorted by TOTSCO
+     * Sorted by TOTSCO by default
 ```
 ----------------------------------------------------------------------------------------------
 RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TOTSCO
@@ -236,7 +239,7 @@ RANK	RULE NAME               	COUNT  %OFMAIL %OFSPAM  %OFHAM  AVGSCO   SCORE  TO
 
  * Mail details:
    * marginal mail classifications
-     * Sorted by DIFF
+     * Sorted by DIFF by default
      * DIFF - Difference between spamassassin score and threshold value (usually 5)
      * RESULT - Yes for spam, No for ham
 ```
@@ -269,7 +272,7 @@ MESSAGE_ID
 ```
 
    * spam with low Bayes scores
-     * Sorted by BAYES
+     * Sorted by BAYES by default
      * DIFF - Difference between spamassassin score and threshold value (usually 5)
      * RESULT - Yes for spam, No for ham
 ```
@@ -296,7 +299,7 @@ MESSAGE_ID
 ```
 
    * ham with high Bayes scores
-     * Sorted by BAYES
+     * Sorted by BAYES by default
      * DIFF - Difference between spamassassin score and threshold value (usually 5)
      * RESULT - Yes for spam, No for ham
 ```
@@ -320,7 +323,7 @@ MESSAGE_ID
 ```
 
    * spam with high positive rule scores
-     * Sorted by NEG
+     * Sorted by NEG by default
      * DIFF - Difference between spamassassin score and threshold value (usually 5)
      * POS - Sum of all the positive rule scores
      * NEG - Sum of all the negative rule scores
@@ -354,7 +357,7 @@ MESSAGE_ID
 ```
 
    * ham with high positive rule scores
-     * Sorted by POS
+     * Sorted by POS by default
      * DIFF - Difference between spamassassin score and threshold value (usually 5)
      * POS - Sum of all the positive rule scores
      * NEG - Sum of all the negative rule scores
@@ -397,7 +400,7 @@ sa-summary includes the following options:
 | --logdir          | -l    | directory  | Directory containing spam logs                                                  | '.'           |
 | --file            | -f    | file/regex | File name or regular expression to look for in the logdir                       | '^maillog$'   |
 | --top             | -t    | integer    | Number of top rules to display                                                  | 100           |
-| --order           | -o    | string     | Order of results in first 4 tables: RULE COUNT PERCMAIL PERCHAM PERCSPAM TOTSCO | TOTSCO        |
+| --order           | -o    | string     | Order of results in first 4 tables: RULE COUNT PERCMAIL PERCHAM PERCSPAM TOTSCO | COUNT/TOTSCO  |
 | --sa_threshold    | -s    | integer    | Spamassassin score threshold                                                    | 5             |
 | --bayes_threshold | -b    | float      | Bayes classifier threshold                                                      | 0.5           |
 | --pos_threshold   | -p    | float      | Positive spamassassin score threshold                                           | 2             |
@@ -449,6 +452,8 @@ The following options will disable all tables except the initial summary tables:
      * Use %3.2f instead of %s with floats for example
    * Improve error messages
      * See [Error messages](https://style.tidyverse.org/error-messages.html) chapter in the R tidyverse style guide
+ * Add functionality
+   * None planned
 
 
 ## Contributing
