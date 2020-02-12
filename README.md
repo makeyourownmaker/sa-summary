@@ -24,6 +24,8 @@ Summary tables are provided for:
    * spam with high positive rule scores
    * ham with high positive rule scores
 
+If you like sa-summary, give it a star, or fork it and contribute!
+
 
 ## Usage
 
